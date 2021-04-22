@@ -109,12 +109,20 @@ var FluentTree = /** @class */ (function () {
         // set rightIndex = length of array - 1
         var rightIndex = levelNodes.length - 1;
         var nextNode;
-        if (ipParts[levelNumber] < levelNodes[leftIndex].value) {
+        if (levelNodes[leftIndex].value === ipParts[levelNumber]) {
+            nextNode = levelNodes[leftIndex];
+        }
+        else if (levelNodes[rightIndex].value === ipParts[levelNumber]) {
+            nextNode = levelNodes[rightIndex];
+        }
+        else if (ipParts[levelNumber] < levelNodes[leftIndex].value) {
             nextNode = levelNodes[leftIndex];
         }
         else {
             while (leftIndex < rightIndex) {
                 var middleIndex = Math.floor((leftIndex + rightIndex) / 2);
+                console.log("Left Index " + leftIndex + ", Right Index " + rightIndex + ", Middle Index " + middleIndex);
+                console.log("Value: " + ipParts[levelNumber] + ", lVal " + levelNodes[leftIndex].value + ", rVal " + levelNodes[rightIndex].value + ", mVal " + levelNodes[middleIndex]);
                 if (ipParts[levelNumber] === levelNodes[middleIndex].value) {
                     nextNode = levelNodes[middleIndex];
                     found = true;
@@ -126,17 +134,32 @@ var FluentTree = /** @class */ (function () {
             if (!found)
                 nextNode = levelNodes[leftIndex];
         }
+        nodeTrail.push(nextNode.value);
+        // Do it again?
         if (levelNumber < ipIndex.octD) {
-            // quicksearch
-            nodeTrail.push(nextNode.value);
+            // quickSearch
             levelNumber++;
             this.quickSearch(nextNode.childNodes, levelNumber, ipParts, nodeTrail);
         }
         else {
             // bottom
             console.log("Trail: " + nodeTrail);
+            // if trail = ipParts 0 - 3 then found = true
+            // reduce?
+            found = nodeTrail.reduce(function (acc, cv, index) {
+                console.log(acc + ", " + cv + ", " + index);
+                return (acc && (cv === ipParts[index]));
+            }, true);
+            if (found) {
+                return true;
+                console.log("FOUND!!!");
+            }
+            else {
+                // Look at prefix
+                return false;
+            }
+            // Otherwise go down to the prefix level
         }
-        return found;
     };
     FluentTree.prototype.quickSort = function (nodeList, node) {
         console.log('Quickly sorting');
