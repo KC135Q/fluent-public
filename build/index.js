@@ -3,6 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 var FluentTree_1 = require("./FluentTree");
 var addressList = [
     "34.197.76.50",
+    "34.197.76.51",
     "34.206.12.234",
     "34.225.182.233",
     "35.169.58.188",

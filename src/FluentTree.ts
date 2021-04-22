@@ -60,7 +60,7 @@ export class FluentTree {
             currentLevelNodeList.push(currentNode)
         } else {
             // - otherwise quick sort
-            this.quickSort(currentLevelNodeList, currentNode);
+            currentNode = this.quickSort(currentLevelNodeList, currentNode);
         }
         // - if not on final level than call yourself (what?)
         if (nextLevel < ipIndex.prefix) {
@@ -72,17 +72,48 @@ export class FluentTree {
         return;
     }
 
-
-    quickSort(nodeList: Node[], node: Node): Node[] {
+    quickSort(nodeList: Node[], node: Node): Node {
         console.log('Quickly sorting');
         console.log(`Level: ${node.level}, Length ${nodeList.length}, Value: ${node.value}`)
-        return nodeList
+        // set left, right and middle index
+        let leftIndex = 0;
+        let rightIndex = nodeList.length - 1;
+        // check left value = value (use that node), check right value = value (use that node)
+        if (nodeList[leftIndex].value === node.value) {
+            return nodeList[leftIndex];
+        }
+        if (nodeList[rightIndex].value === node.value) {
+            return nodeList[rightIndex];
+        }
+        // Start while loop until found or left index = right index
+        while (rightIndex > leftIndex) {
+            // check middle value = value (use that node)
+            let middleIndex = Math.floor((leftIndex + rightIndex) / 2)
+            if (nodeList[middleIndex].value === node.value) {
+                // found so let's get out of here
+                return nodeList[middleIndex];
+            }
+            // if middle value < node value, left index = middle index otherwise right index = middle index
+            if(nodeList[middleIndex].value  < node.value) {
+                leftIndex = middleIndex
+            } else {
+                rightIndex = middleIndex
+            }
+        }
+        // Not found, so insert it into the current Node array and return it
+        nodeList.splice(leftIndex, 0, node)
+        return node
     }
 
     walkTheTree(nodes: Node[] = this.aLevelNodes): void {
         console.log(`Length: ${nodes.length}: ${nodes}`)
-        console.log(nodes[0].childNodes)
-        console.log(nodes[0].childNodes[0].childNodes)
-        console.log(nodes[0].childNodes[0].childNodes[0].childNodes)
+        nodes.forEach(node => {
+            console.log(`-- node: ${node.value}`)
+        })
+
+        if (nodes.length > 0) {nodes.forEach(node => {
+            this.walkTheTree(node.childNodes)
+        })}
+
     }
 }
