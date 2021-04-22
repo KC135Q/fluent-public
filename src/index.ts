@@ -1,1 +1,3 @@
-console.log('hello');
+import { FluentTree } from "./FluentTree";
+
+const fluentTree = new FluentTree();
