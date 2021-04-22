@@ -4,6 +4,7 @@ var FluentTree_1 = require("./FluentTree");
 var addressList = [
     "34.197.76.50",
     "34.197.76.51",
+    "34.197.77.50",
     "34.206.12.234",
     "34.225.182.233",
     "35.169.58.188",
@@ -25,4 +26,5 @@ addressList.forEach(function (address) {
     fluentTree.addIpAddress(address);
 });
 console.log("Finished at " + new Date());
-fluentTree.walkTheTree();
+console.log(fluentTree.findIpAddress("34.197.76.51"));
+// fluentTree.walkTheTree()

@@ -36,11 +36,22 @@ var FluentTree = /** @class */ (function () {
     FluentTree.prototype.addIpAddress = function (ipAddress) {
         console.log("Adding " + ipAddress);
         // If validation on incoming address is required, add it here
-        var ipParts = ipAddress.split("/")[0].split(".").map(function (octet) { return parseInt(octet); });
-        // Get the prefix from the end of the string and use 32 if no prefix is found
-        ipParts.push(parseInt(ipAddress.split("/")[1]) || 32);
+        var ipParts = this.parseIp(ipAddress);
         var node = new Node(ipParts[0], 0);
         this.insertIpAddress(node, this.aLevelNodes, ipParts);
+    };
+    FluentTree.prototype.findIpAddress = function (ipAddress) {
+        var vertexValues = [];
+        // Parse IP
+        var ipParts = this.parseIp(ipAddress);
+        // quickSearch (prefix later)
+        console.log("Finding: " + ipParts);
+        if (this.aLevelNodes && this.aLevelNodes[0].value > ipParts[ipIndex.octA]) {
+            return false;
+        }
+        else {
+            return this.quickSearch(this.aLevelNodes, ipIndex.octA, ipParts);
+        }
     };
     FluentTree.prototype.insertIpAddress = function (currentNode, currentLevelNodeList, ipParts) {
         // console.log(ipNode)
@@ -78,6 +89,54 @@ var FluentTree = /** @class */ (function () {
             currentNode.prefix = ipParts[ipIndex.prefix];
         }
         return;
+    };
+    FluentTree.prototype.parseIp = function (ipString) {
+        var ipParse = ipString.split("/")[0].split(".").map(function (octet) { return parseInt(octet); });
+        // Get the prefix from the end of the string and use 32 if no prefix is found
+        ipParse.push(parseInt(ipString.split("/")[1]) || 32);
+        return ipParse;
+    };
+    FluentTree.prototype.quickSearch = function (levelNodes, levelNumber, ipParts, nodeTrail) {
+        if (nodeTrail === void 0) { nodeTrail = []; }
+        console.log("Current Node level: " + levelNumber + ", ipParts value " + ipParts[levelNumber]);
+        // return of false means not found
+        var found = false;
+        // set leftIndex = 0
+        var leftIndex = 0;
+        if (ipParts[levelNumber] < levelNodes[leftIndex].value) {
+            return false;
+        }
+        // set rightIndex = length of array - 1
+        var rightIndex = levelNodes.length - 1;
+        var nextNode;
+        if (ipParts[levelNumber] < levelNodes[leftIndex].value) {
+            nextNode = levelNodes[leftIndex];
+        }
+        else {
+            while (leftIndex < rightIndex) {
+                var middleIndex = Math.floor((leftIndex + rightIndex) / 2);
+                if (ipParts[levelNumber] === levelNodes[middleIndex].value) {
+                    nextNode = levelNodes[middleIndex];
+                    found = true;
+                }
+                if (ipParts[levelNumber] < levelNodes[middleIndex].value) {
+                    rightIndex = middleIndex;
+                }
+            }
+            if (!found)
+                nextNode = levelNodes[leftIndex];
+        }
+        if (levelNumber < ipIndex.octD) {
+            // quicksearch
+            nodeTrail.push(nextNode.value);
+            levelNumber++;
+            this.quickSearch(nextNode.childNodes, levelNumber, ipParts, nodeTrail);
+        }
+        else {
+            // bottom
+            console.log("Trail: " + nodeTrail);
+        }
+        return found;
     };
     FluentTree.prototype.quickSort = function (nodeList, node) {
         console.log('Quickly sorting');
