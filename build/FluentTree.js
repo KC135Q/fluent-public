@@ -67,7 +67,7 @@ var FluentTree = /** @class */ (function () {
         }
         else {
             // - otherwise quick sort
-            this.quickSort(currentLevelNodeList, currentNode);
+            currentNode = this.quickSort(currentLevelNodeList, currentNode);
         }
         // - if not on final level than call yourself (what?)
         if (nextLevel < ipIndex.prefix) {
@@ -82,14 +82,48 @@ var FluentTree = /** @class */ (function () {
     FluentTree.prototype.quickSort = function (nodeList, node) {
         console.log('Quickly sorting');
         console.log("Level: " + node.level + ", Length " + nodeList.length + ", Value: " + node.value);
-        return nodeList;
+        // set left, right and middle index
+        var leftIndex = 0;
+        var rightIndex = nodeList.length - 1;
+        // check left value = value (use that node), check right value = value (use that node)
+        if (nodeList[leftIndex].value === node.value) {
+            return nodeList[leftIndex];
+        }
+        if (nodeList[rightIndex].value === node.value) {
+            return nodeList[rightIndex];
+        }
+        // Start while loop until found or left index = right index
+        while (rightIndex > leftIndex) {
+            // check middle value = value (use that node)
+            var middleIndex = Math.floor((leftIndex + rightIndex) / 2);
+            if (nodeList[middleIndex].value === node.value) {
+                // found so let's get out of here
+                return nodeList[middleIndex];
+            }
+            // if middle value < node value, left index = middle index otherwise right index = middle index
+            if (nodeList[middleIndex].value < node.value) {
+                leftIndex = middleIndex;
+            }
+            else {
+                rightIndex = middleIndex;
+            }
+        }
+        // Not found, so insert it into the current Node array and return it
+        nodeList.splice(leftIndex, 0, node);
+        return node;
     };
     FluentTree.prototype.walkTheTree = function (nodes) {
+        var _this = this;
         if (nodes === void 0) { nodes = this.aLevelNodes; }
         console.log("Length: " + nodes.length + ": " + nodes);
-        console.log(nodes[0].childNodes);
-        console.log(nodes[0].childNodes[0].childNodes);
-        console.log(nodes[0].childNodes[0].childNodes[0].childNodes);
+        nodes.forEach(function (node) {
+            console.log("-- node: " + node.value);
+        });
+        if (nodes.length > 0) {
+            nodes.forEach(function (node) {
+                _this.walkTheTree(node.childNodes);
+            });
+        }
     };
     return FluentTree;
 }());

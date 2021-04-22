@@ -77,7 +77,7 @@ export class FluentTree {
         console.log(`Level: ${node.level}, Length ${nodeList.length}, Value: ${node.value}`)
         // set left, right and middle index
         let leftIndex = 0;
-        let rightIndex = nodeList.length;
+        let rightIndex = nodeList.length - 1;
         // check left value = value (use that node), check right value = value (use that node)
         if (nodeList[leftIndex].value === node.value) {
             return nodeList[leftIndex];
@@ -107,8 +107,13 @@ export class FluentTree {
 
     walkTheTree(nodes: Node[] = this.aLevelNodes): void {
         console.log(`Length: ${nodes.length}: ${nodes}`)
-        console.log(nodes[0].childNodes)
-        console.log(nodes[0].childNodes[0].childNodes)
-        console.log(nodes[0].childNodes[0].childNodes[0].childNodes)
+        nodes.forEach(node => {
+            console.log(`-- node: ${node.value}`)
+        })
+
+        if (nodes.length > 0) {nodes.forEach(node => {
+            this.walkTheTree(node.childNodes)
+        })}
+
     }
 }
