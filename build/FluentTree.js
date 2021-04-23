@@ -36,22 +36,30 @@ var FluentTree = /** @class */ (function () {
     FluentTree.prototype.addIpAddress = function (ipAddress) {
         console.log("Adding " + ipAddress);
         // If validation on incoming address is required, add it here
-        var ipParts = ipAddress.split("/")[0].split(".").map(function (octet) { return parseInt(octet); });
-        // Get the prefix from the end of the string and use 32 if no prefix is found
-        ipParts.push(parseInt(ipAddress.split("/")[1]) || 32);
+        var ipParts = this.parseIp(ipAddress);
         var node = new Node(ipParts[0], 0);
+        console.log('Quickly sorting');
         this.insertIpAddress(node, this.aLevelNodes, ipParts);
     };
+    FluentTree.prototype.findIpAddress = function (ipAddress) {
+        // let vertexValues: number[] = []
+        // Parse IP
+        var ipParts = this.parseIp(ipAddress);
+        // quickSearch (prefix later)
+        console.log("Finding: " + ipParts);
+        if (this.aLevelNodes && this.aLevelNodes[0].value > ipParts[ipIndex.octA]) {
+            return false;
+        }
+        else {
+            return this.quickSearch(this.aLevelNodes, ipIndex.octA, ipParts);
+        }
+    };
     FluentTree.prototype.insertIpAddress = function (currentNode, currentLevelNodeList, ipParts) {
-        // console.log(ipNode)
         var nextLevel = currentNode.level + 1;
-        // console.log("nextLevel", nextLevel)
-        // console.log(`Level ${ipNode.level}: ${ipNode.value}`)
         // Sort pseudocode :)
         // - non-existent array -- something has gone horribly wrong :( There is an issue to review this in the future
-        console.log("current level list: " + (currentLevelNodeList.length < 1 ? "empty" : "not empty"));
         if (!currentLevelNodeList) {
-            console.log("This should never happen");
+            console.log("This should never happen - Twilight Zone baby");
             return;
         }
         // - level empty, just push new node
@@ -79,9 +87,77 @@ var FluentTree = /** @class */ (function () {
         }
         return;
     };
+    FluentTree.prototype.parseIp = function (ipString) {
+        var ipParse = ipString.split("/")[0].split(".").map(function (octet) { return parseInt(octet); });
+        // Get the prefix from the end of the string and use 32 if no prefix is found
+        ipParse.push(parseInt(ipString.split("/")[1]) || 32);
+        return ipParse;
+    };
+    FluentTree.prototype.quickSearch = function (levelNodes, levelNumber, ipParts, nodeTrail) {
+        if (nodeTrail === void 0) { nodeTrail = []; }
+        // return of false means not found
+        var found = false;
+        // set leftIndex = 0
+        var leftIndex = 0;
+        if (ipParts[levelNumber] < levelNodes[leftIndex].value) {
+            return false;
+        }
+        // set rightIndex = length of array - 1
+        var rightIndex = levelNodes.length - 1;
+        var nextNode;
+        if (levelNodes[leftIndex].value === ipParts[levelNumber]) {
+            nextNode = levelNodes[leftIndex];
+        }
+        else if (levelNodes[rightIndex].value === ipParts[levelNumber]) {
+            nextNode = levelNodes[rightIndex];
+        }
+        else if (ipParts[levelNumber] < levelNodes[leftIndex].value) {
+            nextNode = levelNodes[leftIndex];
+        }
+        else {
+            while (leftIndex < rightIndex && !found) {
+                var middleIndex = Math.floor((leftIndex + rightIndex) / 2);
+                if (ipParts[levelNumber] > levelNodes[rightIndex].value) {
+                    // Value is higher than the highest value in the current Node array so just return it in case
+                    //  it is captured by the nearest prefix :)
+                    nextNode = levelNodes[rightIndex];
+                    found = true;
+                }
+                else if (ipParts[levelNumber] === levelNodes[middleIndex].value) {
+                    nextNode = levelNodes[middleIndex];
+                    found = true;
+                }
+                else if (levelNodes[middleIndex].value > ipParts[levelNumber]) {
+                    leftIndex = middleIndex;
+                }
+                else {
+                    rightIndex = middleIndex;
+                }
+            }
+            if (!found)
+                nextNode = levelNodes[leftIndex];
+        }
+        nodeTrail.push(nextNode.value);
+        // Do it again?
+        if (levelNumber < ipIndex.octD) {
+            levelNumber++;
+            return this.quickSearch(nextNode.childNodes, levelNumber, ipParts, nodeTrail);
+        }
+        else {
+            // if trail = ipParts 0 - 3 then found = true
+            found = nodeTrail.reduce(function (acc, cv, index) {
+                return (acc && (cv === ipParts[index]));
+            }, true);
+            if (found) {
+                return true;
+            }
+            else {
+                // Look at prefix
+                return false;
+            }
+        }
+    };
     FluentTree.prototype.quickSort = function (nodeList, node) {
-        console.log('Quickly sorting');
-        console.log("Level: " + node.level + ", Length " + nodeList.length + ", Value: " + node.value);
         // set left, right and middle index
         var leftIndex = 0;
         var rightIndex = nodeList.length - 1;

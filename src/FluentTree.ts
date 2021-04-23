@@ -31,23 +31,32 @@ export class FluentTree {
     addIpAddress(ipAddress: string): void {
         console.log(`Adding ${ipAddress}`)
         // If validation on incoming address is required, add it here
-        const ipParts = ipAddress.split("/")[0].split(".").map(octet => parseInt(octet));
-        // Get the prefix from the end of the string and use 32 if no prefix is found
-        ipParts.push(parseInt(ipAddress.split("/")[1]) || 32 )
+        const ipParts = this.parseIp(ipAddress)
+
         const node = new Node(ipParts[0], 0)
+        console.log('Quickly sorting');
         this.insertIpAddress(node, this.aLevelNodes, ipParts)
     }
 
+    findIpAddress(ipAddress: string): boolean {
+        // let vertexValues: number[] = []
+        // Parse IP
+        const ipParts = this.parseIp(ipAddress)
+        // quickSearch (prefix later)
+        console.log(`Finding: ${ipParts}`)
+        if (this.aLevelNodes && this.aLevelNodes[0].value > ipParts[ipIndex.octA]){
+            return false;
+        } else {
+            return this.quickSearch(this.aLevelNodes, ipIndex.octA, ipParts)
+        }
+    }
+
     insertIpAddress(currentNode: Node, currentLevelNodeList: Node[], ipParts: number[]): void {
-        // console.log(ipNode)
         let nextLevel = currentNode.level + 1
-        // console.log("nextLevel", nextLevel)
-        // console.log(`Level ${ipNode.level}: ${ipNode.value}`)
         // Sort pseudocode :)
         // - non-existent array -- something has gone horribly wrong :( There is an issue to review this in the future
-        console.log(`current level list: ${currentLevelNodeList.length < 1 ? "empty" : "not empty"}`)
         if (!currentLevelNodeList) {
-            console.log("This should never happen")
+            console.log("This should never happen - Twilight Zone baby")
             return
         }
         // - level empty, just push new node
@@ -63,6 +72,7 @@ export class FluentTree {
             currentNode = this.quickSort(currentLevelNodeList, currentNode);
         }
         // - if not on final level than call yourself (what?)
+
         if (nextLevel < ipIndex.prefix) {
             const nextNode = new Node(ipParts[nextLevel], nextLevel)
             this.insertIpAddress(nextNode, currentNode.childNodes, ipParts)
@@ -72,9 +82,73 @@ export class FluentTree {
         return;
     }
 
+    parseIp(ipString: string): number[] {
+        const ipParse = ipString.split("/")[0].split(".").map(octet => parseInt(octet));
+        // Get the prefix from the end of the string and use 32 if no prefix is found
+        ipParse.push(parseInt(ipString.split("/")[1]) || 32 )
+
+        return ipParse
+    }
+
+    quickSearch(levelNodes: Node[], levelNumber: number, ipParts: number[], nodeTrail: number[] = []): boolean {
+        // return of false means not found
+        let found: boolean = false
+        // set leftIndex = 0
+        let leftIndex = 0;
+        if (ipParts[levelNumber] < levelNodes[leftIndex].value) {
+            return false
+        }
+        // set rightIndex = length of array - 1
+        let rightIndex = levelNodes.length - 1
+
+        let nextNode!: Node;
+        if (levelNodes[leftIndex].value === ipParts[levelNumber]) {
+            nextNode = levelNodes[leftIndex];
+        } else if (levelNodes[rightIndex].value === ipParts[levelNumber]){
+            nextNode = levelNodes[rightIndex];
+        } else if(ipParts[levelNumber] < levelNodes[leftIndex].value) {
+            nextNode = levelNodes[leftIndex]
+        } else {
+            while(leftIndex < rightIndex && !found) {
+                let middleIndex = Math.floor((leftIndex + rightIndex) / 2)
+                if (ipParts[levelNumber] > levelNodes[rightIndex].value) {
+                    // Value is higher than the highest value in the current Node array so just return it in case
+                    //  it is captured by the nearest prefix :)
+                    nextNode = levelNodes[rightIndex]
+                    found = true
+                }
+                else if (ipParts[levelNumber] === levelNodes[middleIndex].value) {
+                    nextNode = levelNodes[middleIndex]
+                    found = true;
+                } else if (levelNodes[middleIndex].value > ipParts[levelNumber]) {
+                    leftIndex = middleIndex
+                } else {
+                    rightIndex = middleIndex
+                }
+            }
+            if (!found) nextNode = levelNodes[leftIndex]
+        }
+        nodeTrail.push(nextNode.value)
+        // Do it again?
+
+        if (levelNumber < ipIndex.octD) {
+            levelNumber++
+            return this.quickSearch(nextNode.childNodes, levelNumber, ipParts, nodeTrail)
+        } else {
+            // if trail = ipParts 0 - 3 then found = true
+            found = nodeTrail.reduce((acc: boolean, cv: number, index: number): boolean => {
+                return (acc && (cv === ipParts[index]));
+            }, true)
+            if (found) {
+                return true;
+            } else {
+                // Look at prefix
+                return false;
+            }
+        }
+    }
+
     quickSort(nodeList: Node[], node: Node): Node {
-        console.log('Quickly sorting');
-        console.log(`Level: ${node.level}, Length ${nodeList.length}, Value: ${node.value}`)
         // set left, right and middle index
         let leftIndex = 0;
         let rightIndex = nodeList.length - 1;
