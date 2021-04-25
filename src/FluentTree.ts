@@ -16,7 +16,7 @@ const ipIndex = {
     prefix: 4
 }
 /**
- * FluentTrue module
+ * FluentTree module
  * @module FluentTree
  * @description Primary data structure storing current blacklisted ip addresses. It is a variant of a Radix tree to decrease depth while still maintaining an efficient lookup time
  * @property {Array} aLevelNodes Contains all values for the first ip octet
@@ -25,6 +25,7 @@ const ipIndex = {
  */
 export class FluentTree {
     aLevelNodes: Node[] = []
+    searchAvailable: boolean = true // Change this to false when removing a Node
     constructor() {
         console.log("I'm a tree")
     }
@@ -36,6 +37,50 @@ export class FluentTree {
         const node = new Node(ipParts[0], 0)
         console.log('Quickly sorting');
         this.insertIpAddress(node, this.aLevelNodes, ipParts)
+    }
+
+    removeIpAddress(ipAddress: string): void {
+        console.log(`Removing ${ipAddress}`)
+        // If validation on incoming address is required, add it here
+        const ipParts = this.parseIp(ipAddress)
+        if(this.aLevelNodes && this.aLevelNodes.length > 0) {
+            let success = this.searchAndDestroy(this.aLevelNodes, ipIndex.octA, ipParts);
+        }
+        return
+    }
+
+    searchAndDestroy(levelNodes: Node[], levelNumber: number, ipParts: number[], nodeTuple: [number, Node][] = []): boolean {
+
+        for (let i = 0; i < levelNodes.length; i++) {
+
+            if (levelNodes[i].value === ipParts[levelNumber]) {
+                nodeTuple.push([i, levelNodes[i]])
+                if (levelNumber < ipIndex.octD) {
+                    return this.searchAndDestroy(levelNodes[i].childNodes, levelNumber + 1, ipParts, nodeTuple)
+                }
+            }
+        }
+
+        // if it is less than 4 entries then that IP was not found so disregard removal
+        if (nodeTuple.length < 4) {
+            return false
+        } else {
+            let removed: boolean = false
+            let level: number = ipIndex.octD;
+            while (!removed && level > -1) {
+                // if childNodes.length = zero, then remove it (go to parent and remove it from the array)
+                if (nodeTuple[level][1].childNodes.length === 0) {
+                    nodeTuple[level -1][1].childNodes.splice(nodeTuple[level][0], 1)
+
+                } else {
+                    // no children = zero means we can stop moving up levels
+                    removed = true;
+                }
+                level--
+            }
+            return true;
+
+        }
     }
 
     findIpAddress(ipAddress: string): boolean {
@@ -95,6 +140,7 @@ export class FluentTree {
         let found: boolean = false
         // set leftIndex = 0
         let leftIndex = 0;
+        console.log(`trail: ${nodeTrail}`)
         if (ipParts[levelNumber] < levelNodes[leftIndex].value) {
             return false
         }
