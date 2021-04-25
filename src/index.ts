@@ -1,6 +1,5 @@
-import express, { Request, Response} from 'express'
+import Express, { Request, Response} from 'express'
 import { FluentTree } from "./FluentTree";
-import {deepStrictEqual} from "assert";
 import { FluentFile} from "./FluentFile";
 
 const express = require('express');
@@ -58,7 +57,7 @@ fluentTree.removeIpAddress("34.225.182.233")
 console.log(fluentTree.findIpAddress("34.225.182.233"))
 
 app.get('/api/v1/ip/blocked', (req: Request ,res: Response) => {
-    let ipIsBlocked: boolean = fluentTree.findIpAddress(req.query.ipAddress);
+    let ipIsBlocked: boolean = fluentTree.findIpAddress(<string>req.query.ipAddress);
     console.log(req.query.ipAddress);
     res.status(200).send(ipIsBlocked)
 });
