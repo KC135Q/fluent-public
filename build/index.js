@@ -27,5 +27,8 @@ addressList.forEach(function (address) {
     fluentTree.addIpAddress(address);
 });
 console.log("Finished at " + new Date());
-console.log(fluentTree.findIpAddress("36.119.0.0"));
+console.log(fluentTree.findIpAddress("34.225.182.233"));
 // fluentTree.walkTheTree()
+// fluentTree.removeIpAddress("33.192.24.74")
+fluentTree.removeIpAddress("34.225.182.233");
+console.log(fluentTree.findIpAddress("34.225.182.233"));
