@@ -32,5 +32,5 @@ console.log(fluentTree.findIpAddress("34.225.182.233"))
 
 // fluentTree.walkTheTree()
 // fluentTree.removeIpAddress("33.192.24.74")
-console.log(fluentTree.removeIpAddress("34.225.182.233"))
+fluentTree.removeIpAddress("34.225.182.233")
 console.log(fluentTree.findIpAddress("34.225.182.233"))
