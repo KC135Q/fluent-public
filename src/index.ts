@@ -1,6 +1,8 @@
 import { FluentTree } from "./FluentTree";
 import {deepStrictEqual} from "assert";
 
+const ipFile = '/data/firehol/firehol_level1.netset'
+
 const addressList: string[] = [
     "33.192.24.74/30",
     "34.197.76.50",
