@@ -1,6 +1,11 @@
+import express, { Request, Response} from 'express'
 import { FluentTree } from "./FluentTree";
 import {deepStrictEqual} from "assert";
 import { FluentFile} from "./FluentFile";
+
+const express = require('express');
+const app = express();
+const PORT = process.env.PORT || 3000;
 
 const ipUrl = "https://raw.githubusercontent.com/ktsaou/blocklist-ipsets/master/firehol_level1.netset";
 
@@ -38,15 +43,26 @@ const fluentFile = new FluentFile();
 fluentFile.getCurrentFile(ipUrl);
 console.log('Add', fluentFile.getAddressesToAdd())
 console.log('Remove', fluentFile.getAddressesToRemove())
-// console.log(`Starting at ${new Date()}`)
-// const fluentTree = new FluentTree();
-// addressList.forEach(address => {
-//     fluentTree.addIpAddress(address)
-// })
-// console.log(`Finished at ${new Date()}`)
-// console.log(fluentTree.findIpAddress("34.225.182.233"))
-//
-// // fluentTree.walkTheTree()
-// // fluentTree.removeIpAddress("33.192.24.74")
-// fluentTree.removeIpAddress("34.225.182.233")
-// console.log(fluentTree.findIpAddress("34.225.182.233"))
+
+console.log(`Starting at ${new Date()}`)
+const fluentTree = new FluentTree();
+addressList.forEach(address => {
+    fluentTree.addIpAddress(address)
+})
+console.log(`Finished at ${new Date()}`)
+console.log(fluentTree.findIpAddress("34.225.182.233"))
+
+// fluentTree.walkTheTree()
+// fluentTree.removeIpAddress("33.192.24.74")
+fluentTree.removeIpAddress("34.225.182.233")
+console.log(fluentTree.findIpAddress("34.225.182.233"))
+
+app.get('/api/v1/ip/blocked', (req: Request ,res: Response) => {
+    let ipIsBlocked: boolean = fluentTree.findIpAddress(req.query.ipAddress);
+    console.log(req.query.ipAddress);
+    res.status(200).send(ipIsBlocked)
+});
+
+app.listen(PORT, () => {
+    console.log(`⚡️[server]: Server is running at https://localhost:${PORT}`);
+});
