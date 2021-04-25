@@ -1,7 +1,8 @@
 import { FluentTree } from "./FluentTree";
 import {deepStrictEqual} from "assert";
+import { FluentFile} from "./FluentFile";
 
-const ipFile = '/data/firehol/firehol_level1.netset'
+const ipUrl = "https://raw.githubusercontent.com/ktsaou/blocklist-ipsets/master/firehol_level1.netset";
 
 const addressList: string[] = [
     "33.192.24.74/30",
@@ -24,15 +25,28 @@ const addressList: string[] = [
     "36.119.0.0/16"
 ]
 
-console.log(`Starting at ${new Date()}`)
-const fluentTree = new FluentTree();
-addressList.forEach(address => {
-    fluentTree.addIpAddress(address)
-})
-console.log(`Finished at ${new Date()}`)
-console.log(fluentTree.findIpAddress("34.225.182.233"))
+// On start, call setup
+// Setup should be called every Random (5 - 20) minutes to check the firehol file
+// setup updates the Tree with new addresses and removes old ones
+// express app listens for an ip check '/api/v1/ip/blocked?ipAddress=1.2.3.4
 
-// fluentTree.walkTheTree()
-// fluentTree.removeIpAddress("33.192.24.74")
-fluentTree.removeIpAddress("34.225.182.233")
-console.log(fluentTree.findIpAddress("34.225.182.233"))
+//  - returns true if blocked, false otherwise
+// JSDoc... Create deployment and test
+
+// Get File
+const fluentFile = new FluentFile();
+fluentFile.getCurrentFile(ipUrl);
+console.log('Add', fluentFile.getAddressesToAdd())
+console.log('Remove', fluentFile.getAddressesToRemove())
+// console.log(`Starting at ${new Date()}`)
+// const fluentTree = new FluentTree();
+// addressList.forEach(address => {
+//     fluentTree.addIpAddress(address)
+// })
+// console.log(`Finished at ${new Date()}`)
+// console.log(fluentTree.findIpAddress("34.225.182.233"))
+//
+// // fluentTree.walkTheTree()
+// // fluentTree.removeIpAddress("33.192.24.74")
+// fluentTree.removeIpAddress("34.225.182.233")
+// console.log(fluentTree.findIpAddress("34.225.182.233"))

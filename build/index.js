@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var FluentTree_1 = require("./FluentTree");
+var FluentFile_1 = require("./FluentFile");
+var ipUrl = "https://raw.githubusercontent.com/ktsaou/blocklist-ipsets/master/firehol_level1.netset";
 var addressList = [
     "33.192.24.74/30",
     "34.197.76.50",
@@ -21,14 +22,20 @@ var addressList = [
     "36.116.0.0/16",
     "36.119.0.0/16"
 ];
-console.log("Starting at " + new Date());
-var fluentTree = new FluentTree_1.FluentTree();
-addressList.forEach(function (address) {
-    fluentTree.addIpAddress(address);
-});
-console.log("Finished at " + new Date());
-console.log(fluentTree.findIpAddress("34.225.182.233"));
-// fluentTree.walkTheTree()
-// fluentTree.removeIpAddress("33.192.24.74")
-fluentTree.removeIpAddress("34.225.182.233");
-console.log(fluentTree.findIpAddress("34.225.182.233"));
+// Get File
+var fluentFile = new FluentFile_1.FluentFile();
+fluentFile.getCurrentFile(ipUrl);
+console.log('Add', fluentFile.getAddressesToAdd());
+console.log('Remove', fluentFile.getAddressesToRemove());
+// console.log(`Starting at ${new Date()}`)
+// const fluentTree = new FluentTree();
+// addressList.forEach(address => {
+//     fluentTree.addIpAddress(address)
+// })
+// console.log(`Finished at ${new Date()}`)
+// console.log(fluentTree.findIpAddress("34.225.182.233"))
+//
+// // fluentTree.walkTheTree()
+// // fluentTree.removeIpAddress("33.192.24.74")
+// fluentTree.removeIpAddress("34.225.182.233")
+// console.log(fluentTree.findIpAddress("34.225.182.233"))
