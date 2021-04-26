@@ -44,16 +44,23 @@ var axios_1 = __importDefault(require("axios"));
 var FluentFile = /** @class */ (function () {
     function FluentFile() {
         // lastUpdated is a getter
-        this.lastUpdated = new Date();
+        this.lastUpdated = '';
+        this.currentDate = '';
         this.previousAddresses = [];
         this.currentHeader = [];
         this.currentAddresses = [];
         if (!this.lastUpdated) {
-            this.lastUpdated = new Date();
+            this.lastUpdated = 'yesterday';
         }
     }
     FluentFile.prototype.setHeader = function (header) {
+        var _this = this;
         this.currentHeader = header;
+        header.forEach(function (headline) {
+            if (headline.indexOf('This File Date') > -1) {
+                _this.currentDate = headline.split(':')[1];
+            }
+        });
     };
     FluentFile.prototype.setAddresses = function (addresses) {
         this.currentAddresses = addresses;
@@ -68,12 +75,12 @@ var FluentFile = /** @class */ (function () {
                         return [4 /*yield*/, axios_1.default.get(url)];
                     case 1:
                         data = _a.sent();
-                        this.setHeader(data.data.split("\n").filter(function (line) { return line.indexOf('#') == 1; }));
-                        this.setAddresses(data.data.split("\n").filter(function (line) { return line.indexOf('#') != 1; }));
+                        this.setHeader(data.data.split('\n').filter(function (line) { return line.indexOf('#') > -1; }));
+                        this.setAddresses(data.data.split('\n').filter(function (line) { return line.indexOf('#') < 0; }));
                         return [2 /*return*/];
                     case 2:
                         error_1 = _a.sent();
-                        throw (error_1);
+                        throw error_1;
                     case 3: return [2 /*return*/];
                 }
             });
@@ -86,18 +93,18 @@ var FluentFile = /** @class */ (function () {
     };
     FluentFile.prototype.getAddressesToRemove = function () {
         var _this = this;
-        var oldAddresses = this.previousAddresses.filter(function (address) { return _this.previousAddresses.includes(address); });
+        var oldAddresses = this.previousAddresses.filter(function (address) { return !_this.currentAddresses.includes(address); });
         return oldAddresses;
     };
     FluentFile.prototype.archiveAddresses = function () {
-        this.previousAddresses = this.currentAddresses;
+        this.previousAddresses = this.currentAddresses || [];
         this.currentAddresses = [];
     };
     FluentFile.prototype.getLastUpdated = function () {
         return this.lastUpdated;
     };
     FluentFile.prototype.setLastUpdated = function (lastUpdated) {
-        if (lastUpdated === void 0) { lastUpdated = new Date(); }
+        if (lastUpdated === void 0) { lastUpdated = ''; }
         this.lastUpdated = lastUpdated;
     };
     return FluentFile;

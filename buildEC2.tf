@@ -38,8 +38,9 @@ resource "aws_security_group" "testInstanceSG" {
 resource "aws_instance" "web" {
   ami           = "ami-08e6f405721a8a1c2"
   instance_type = "t2.small"
+  vpc_security_group_ids = [aws_security_group.testInstanceSG.id]  
   key_name = "fluent-pem"
-  vpc_security_group_ids = [aws_security_group.testInstanceSG.id]
+
   tags = {
     Name = "FLUENT"
   }

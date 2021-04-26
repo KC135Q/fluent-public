@@ -4,7 +4,7 @@ var FluentTree_1 = require("./FluentTree");
 var FluentFile_1 = require("./FluentFile");
 var express = require('express');
 var app = express();
-var PORT = process.env.PORT || 80;
+var PORT = 8080;
 var ipUrl = 'https://raw.githubusercontent.com/ktsaou/blocklist-ipsets/master/firehol_level1.netset';
 var addressList = [
     '33.192.24.74/30',
@@ -28,30 +28,56 @@ var addressList = [
 ];
 // On start, call setup
 // Setup should be called every Random (5 - 20) minutes to check the firehol file
+// Show the interval in terminal
 // setup updates the Tree with new addresses and removes old ones
 // express app listens for an ip check '/api/v1/ip/blocked?ipAddress=1.2.3.4
-//  - returns true if blocked, false otherwise
-// JSDoc... Create deployment and test
 // Get File
 var fluentFile = new FluentFile_1.FluentFile();
-fluentFile.getCurrentFile(ipUrl);
-console.log('Add', fluentFile.getAddressesToAdd());
-console.log('Remove', fluentFile.getAddressesToRemove());
+// Set the seeds as previous addresses so we can see it change quickly
+// fluentFile.setAddresses(addressList);
 console.log("Starting at " + new Date());
 var fluentTree = new FluentTree_1.FluentTree();
-addressList.forEach(function (address) {
-    fluentTree.addIpAddress(address);
-});
+// addressList.forEach((address) => {
+//   fluentTree.addIpAddress(address);
+// });
 console.log("Finished at " + new Date());
-console.log(fluentTree.findIpAddress('34.225.182.233'));
+// For testing
+// console.log(fluentTree.findIpAddress('34.225.182.233'));
 // fluentTree.walkTheTree()
 // fluentTree.removeIpAddress("33.192.24.74")
-fluentTree.removeIpAddress('34.225.182.233');
-console.log(fluentTree.findIpAddress('34.225.182.233'));
+// fluentTree.removeIpAddress('34.225.182.233');
+// console.log(fluentTree.findIpAddress('34.225.182.233'));
+//  - returns true if blocked, false otherwise
+// JSDoc... Create deployment and test
+function startIpUpdate() {
+    // Get the seed addresses and start the clock
+    console.log('startIpUpdate ...');
+    var myTimeout = setTimeout(function () {
+        fluentFile.getCurrentFile(ipUrl);
+        if (fluentFile.lastUpdated !== fluentFile.currentDate) {
+            console.log('No IP address changes');
+            fluentFile.getAddressesToRemove().forEach(function (address) {
+                console.log("Remove " + address);
+                fluentTree.removeIpAddress(address);
+            });
+            fluentFile.getAddressesToAdd().forEach(function (address) {
+                console.log("Add " + address);
+                fluentTree.addIpAddress(address);
+            });
+            fluentFile.archiveAddresses();
+        }
+        // do it again (forever...)
+        startIpUpdate();
+    }, (Math.floor(Math.random() * 15) + 5) * 1000);
+}
+startIpUpdate();
 app.get('/api/v1/ip/blocked', function (req, res) {
     var ipIsBlocked = fluentTree.findIpAddress(req.query.ipAddress);
-    console.log(req.query.ipAddress);
+    console.log("Is " + req.query.ipAddress + " blocked?", ipIsBlocked);
     res.status(200).send(ipIsBlocked);
+});
+app.get('/walk', function (req, res) {
+    fluentTree.walkTheTree();
 });
 app.listen(PORT, function () {
     console.log("\u26A1\uFE0F[server]: Server is running at https://localhost:" + PORT);
