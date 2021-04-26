@@ -1,57 +1,73 @@
 import axios from 'axios';
 
-export class FluentFile{
-    // lastUpdated is a getter
-    lastUpdated: Date = new Date();
-    previousAddresses: string[] = [];
-    currentHeader: string[] = [];
-    currentAddresses: string[] = [];
+export class FluentFile {
+  // lastUpdated is a getter
+  lastUpdated: string = '';
+  currentDate: string = '';
+  previousAddresses: string[] = [];
+  currentHeader: string[] = [];
 
-    constructor() {
-        if(!this.lastUpdated) {
-            this.lastUpdated = new Date();
-        }
-    }
+  currentAddresses: string[] = [];
 
-    setHeader(header: string[]): void {
-        this.currentHeader = header;
+  constructor() {
+    if (!this.lastUpdated) {
+      this.lastUpdated = 'yesterday';
     }
+  }
 
-    setAddresses(addresses: string[]): void {
-        this.currentAddresses = addresses
-    }
+  setHeader(header: string[]): void {
+    this.currentHeader = header;
+    header.forEach((headline) => {
+      if (headline.indexOf('This File Date') > -1) {
+        this.currentDate = headline.split(':')[1];
+      }
+    });
+  }
 
-    async getCurrentFile(url: string) {
-        try{
-            let data = await axios.get(url);
-            this.setHeader(data.data.split("\n").filter((line: string) => line.indexOf('#') == 1))
-            this.setAddresses(data.data.split("\n").filter((line: string) => line.indexOf('#') != 1))
-            return
-        } catch (error) {
-            throw (error)
-        }
-    }
+  setAddresses(addresses: string[]): void {
+    this.currentAddresses = addresses;
+  }
 
-    getAddressesToAdd(): string[] {
-        let newAddresses = this.currentAddresses.filter((address: string) => !this.previousAddresses.includes(address))
-        return newAddresses
-    }
+  async getCurrentFile(url: string) {
+    try {
+      let data = await axios.get(url);
+      this.setHeader(
+        data.data.split('\n').filter((line: string) => line.indexOf('#') > -1)
+      );
+      this.setAddresses(
+        data.data.split('\n').filter((line: string) => line.indexOf('#') < 0)
+      );
 
-    getAddressesToRemove(): string[] {
-        let oldAddresses = this.previousAddresses.filter((address: string) => this.previousAddresses.includes(address))
-        return oldAddresses
+      return;
+    } catch (error) {
+      throw error;
     }
+  }
 
-    archiveAddresses(): void {
-        this.previousAddresses = this.currentAddresses
-        this.currentAddresses = []
-    }
+  getAddressesToAdd(): string[] {
+    let newAddresses = this.currentAddresses.filter(
+      (address: string) => !this.previousAddresses.includes(address)
+    );
+    return newAddresses;
+  }
 
-    getLastUpdated(): Date {
-        return this.lastUpdated;
-    }
+  getAddressesToRemove(): string[] {
+    let oldAddresses = this.previousAddresses.filter(
+      (address: string) => !this.currentAddresses.includes(address)
+    );
+    return oldAddresses;
+  }
 
-    setLastUpdated(lastUpdated: Date = new Date()): void {
-        this.lastUpdated = lastUpdated;
-    }
+  archiveAddresses(): void {
+    this.previousAddresses = this.currentAddresses || [];
+    this.currentAddresses = [];
+  }
+
+  getLastUpdated(): string {
+    return this.lastUpdated;
+  }
+
+  setLastUpdated(lastUpdated: string = ''): void {
+    this.lastUpdated = lastUpdated;
+  }
 }
