@@ -29,9 +29,9 @@ var ipIndex = {
  * @method insertIpAddress
  */
 var FluentTree = /** @class */ (function () {
+    // searchAvailable: boolean = true; // Change this to false when removing a Node
     function FluentTree() {
         this.aLevelNodes = [];
-        this.searchAvailable = true; // Change this to false when removing a Node
         console.log("I'm a tree");
     }
     FluentTree.prototype.addIpAddress = function (ipAddress) {
@@ -51,17 +51,20 @@ var FluentTree = /** @class */ (function () {
         // If validation on incoming address is required, add it here
         var ipParts = this.parseIp(ipAddress);
         if (this.aLevelNodes && this.aLevelNodes.length > 0) {
-            var success = this.searchAndDestroy(this.aLevelNodes, ipIndex.octA, ipParts);
+            this.searchAndDestroy(this.aLevelNodes, ipIndex.octA, ipParts, -1);
         }
         return;
     };
-    FluentTree.prototype.searchAndDestroy = function (levelNodes, levelNumber, ipParts, nodeTuple) {
+    FluentTree.prototype.searchAndDestroy = function (levelNodes, levelNumber, ipParts, levelAIndex, nodeTuple) {
         if (nodeTuple === void 0) { nodeTuple = []; }
         for (var i = 0; i < levelNodes.length; i++) {
             if (levelNodes[i].value === ipParts[levelNumber]) {
+                if (levelNumber === ipIndex.octA) {
+                    levelAIndex = i;
+                }
                 nodeTuple.push([i, levelNodes[i]]);
-                if (levelNumber < ipIndex.octD) {
-                    return this.searchAndDestroy(levelNodes[i].childNodes, levelNumber + 1, ipParts, nodeTuple);
+                if (levelNumber < ipIndex.prefix) {
+                    return this.searchAndDestroy(levelNodes[i].childNodes, levelNumber + 1, ipParts, levelAIndex, nodeTuple);
                 }
             }
         }
@@ -72,10 +75,9 @@ var FluentTree = /** @class */ (function () {
         else {
             var removed = false;
             var level = ipIndex.octD;
-            while (!removed && level > 0) {
+            while (!removed && level > ipIndex.octA) {
                 // if childNodes.length = zero, then remove it (go to parent and remove it from the array)
                 if (nodeTuple[level][1].childNodes.length === 0) {
-                    console.log('LEVEL: ', level);
                     nodeTuple[level - 1][1].childNodes.splice(nodeTuple[level][0], 1);
                 }
                 else {
@@ -83,6 +85,11 @@ var FluentTree = /** @class */ (function () {
                     removed = true;
                 }
                 level = level - 1;
+            }
+            // special case for level a nodes :)
+            var sneezing = 0;
+            if (levelAIndex > -1 && this.aLevelNodes[levelAIndex].childNodes.length === 0) {
+                this.aLevelNodes.splice(levelAIndex, 1);
             }
             return true;
         }
@@ -93,7 +100,7 @@ var FluentTree = /** @class */ (function () {
             // Parse IP
             var ipParts = this.parseIp(ipAddress);
             // quickSearch (prefix later)
-            console.log("Finding: " + ipParts);
+            // console.log(`Finding: ${ipParts}`);
             if (this.aLevelNodes &&
                 this.aLevelNodes[0].value > ipParts[ipIndex.octA]) {
                 return false;
@@ -114,8 +121,8 @@ var FluentTree = /** @class */ (function () {
         General approach is if it is less than the first then splice, the first in the array or
         greater than the last, then push. Otherwise, use a QuickSort algorithm to put it in the
         proper location with a Splice method
-      @param {Node} currentNode - Node that has the value of the current octect level
-      @param {Node<Array>} currentLevelNodeList - Array of nodes at the current octect level
+      @param {Node} currentNode - Node that has the value of the current octet level
+      @param {Node<Array>} currentLevelNodeList - Array of nodes at the current octet level
       @param {number<Array>} ipParts - Array of dotted decimal values for each of the four octet levels
      */
     FluentTree.prototype.insertIpAddress = function (currentNode, currentLevelNodeList, ipParts) {
@@ -163,19 +170,22 @@ var FluentTree = /** @class */ (function () {
     };
     FluentTree.prototype.quickSearch = function (levelNodes, levelNumber, ipParts, nodeTrail) {
         if (nodeTrail === void 0) { nodeTrail = []; }
-        console.log('-- IP PARTS -- ', ipParts);
+        // console.log('-- IP PARTS -- ', ipParts);
+        var trailPrefix = null;
         // return of false means not found
         var found = false;
         // set leftIndex = 0
         var leftIndex = 0;
-        console.log("trail: " + nodeTrail);
+        // console.log(`trail: ${nodeTrail}`);
         if (ipParts[levelNumber] < levelNodes[leftIndex].value) {
             return false;
         }
         // set rightIndex = length of array - 1
         var rightIndex = levelNodes.length - 1;
         var nextNode;
-        console.log("Left: " + leftIndex + ": " + levelNodes[leftIndex].value + ", Right: " + rightIndex + ": " + levelNodes[rightIndex].value);
+        // console.log(
+        //   `Left: ${leftIndex}: ${levelNodes[leftIndex].value}, Right: ${rightIndex}: ${levelNodes[rightIndex].value}`
+        // );
         if (levelNodes[leftIndex].value === ipParts[levelNumber]) {
             nextNode = levelNodes[leftIndex];
         }
@@ -207,6 +217,9 @@ var FluentTree = /** @class */ (function () {
             }
             if (!found)
                 nextNode = levelNodes[leftIndex];
+            if (levelNumber >= ipIndex.octD) {
+                trailPrefix = nextNode.prefix || null;
+            }
         }
         nodeTrail.push(nextNode.value);
         // Do it again?
@@ -219,13 +232,21 @@ var FluentTree = /** @class */ (function () {
             found = nodeTrail.reduce(function (acc, cv, index) {
                 return acc && cv === ipParts[index];
             }, true);
-            if (found) {
-                return true;
+            if (!found && trailPrefix) {
+                if (ipParts.length > 4)
+                    ipParts.pop();
+                // Add prefix check here
+                var addressesRequired = ipParts.reduce(function (acc, cv, idx, ary) {
+                    console.log("cv: " + cv + " - nodeTrail[idx] " + nodeTrail[idx] + " * Math.pow(256, ary.length " + ary.length + " - idx " + idx + ")) + acc: " + acc);
+                    return ((cv - nodeTrail[idx]) * Math.pow(256, ary.length - 1 - idx)) + acc;
+                }, 0);
+                console.log("Required: " + addressesRequired);
+                var calculatedPrefix = addressesRequired === 1 ? 31 : 32 - Math.ceil(Math.log2(addressesRequired));
+                console.log("Calulated: " + calculatedPrefix + ", Existing: " + trailPrefix);
+                if (calculatedPrefix >= trailPrefix)
+                    found = true;
             }
-            else {
-                // Look at prefix
-                return false;
-            }
+            return found;
         }
     };
     FluentTree.prototype.quickSort = function (nodeList, node) {
@@ -258,6 +279,9 @@ var FluentTree = /** @class */ (function () {
         // Not found, so insert it into the current Node array and return it
         nodeList.splice(leftIndex, 0, node);
         return node;
+    };
+    FluentTree.prototype.isAddressInRange = function (ipToCheck, ipBase, prefix) {
+        return true;
     };
     FluentTree.prototype.walkTheTree = function (nodes) {
         var _this = this;
