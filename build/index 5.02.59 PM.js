@@ -43,57 +43,25 @@ var express_1 = __importDefault(require("express"));
 var FluentTree_1 = require("./FluentTree");
 var FluentFile_1 = require("./FluentFile");
 var app = express_1.default();
-var PORT = 8080;
-var quickStart = 0; // 0 or 1 -- multiply in Timer to quickstart when not t
-var ipTestUrl = 'https://raw.githubusercontent.com/KC135Q/ip-lists/master/addresses.netset';
+var PORT = process.env.PORT || 8080;
 var ipUrl = 'https://raw.githubusercontent.com/ktsaou/blocklist-ipsets/master/firehol_level1.netset';
 var fluentFile = new FluentFile_1.FluentFile();
 var fluentTree = new FluentTree_1.FluentTree();
-function getFirstIp() {
-    return __awaiter(this, void 0, void 0, function () {
-        var error_1;
-        return __generator(this, function (_a) {
-            switch (_a.label) {
-                case 0:
-                    _a.trys.push([0, 2, , 3]);
-                    return [4 /*yield*/, fluentFile.getCurrentFile(ipTestUrl)];
-                case 1:
-                    _a.sent();
-                    if (fluentFile.lastUpdated !== fluentFile.currentDate) {
-                        fluentFile.getAddressesToRemove().forEach(function (address) {
-                            console.log("Remove " + address);
-                            fluentTree.removeIpAddress(address);
-                        });
-                        fluentFile.getAddressesToAdd().forEach(function (address) {
-                            console.log("Add " + address);
-                            fluentTree.addIpAddress(address);
-                        });
-                        fluentFile.archiveAddresses();
-                    }
-                    return [3 /*break*/, 3];
-                case 2:
-                    error_1 = _a.sent();
-                    console.warn(error_1);
-                    return [3 /*break*/, 3];
-                case 3:
-                    startIpUpdate();
-                    return [2 /*return*/];
-            }
-        });
-    });
-}
-//  - returns true if blocked, false otherwise
 // JSDoc... Create deployment and test
 function startIpUpdate() {
     // Get the seed addresses and start the clock
     var _this = this;
     setTimeout(function () { return __awaiter(_this, void 0, void 0, function () {
+        var error_1;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
                     process.stdout.write('.');
-                    return [4 /*yield*/, fluentFile.getCurrentFile(ipUrl)];
+                    _a.label = 1;
                 case 1:
+                    _a.trys.push([1, 3, , 4]);
+                    return [4 /*yield*/, fluentFile.getCurrentFile(ipUrl)];
+                case 2:
                     _a.sent();
                     if (fluentFile.lastUpdated !== fluentFile.currentDate) {
                         fluentFile.getAddressesToRemove().forEach(function (address) {
@@ -106,6 +74,13 @@ function startIpUpdate() {
                         });
                         fluentFile.archiveAddresses();
                     }
+                    return [3 /*break*/, 4];
+                case 3:
+                    error_1 = _a.sent();
+                    // TODO
+                    console.log(error_1);
+                    return [3 /*break*/, 4];
+                case 4:
                     // do it again (forever...)
                     startIpUpdate();
                     return [2 /*return*/];
@@ -114,7 +89,6 @@ function startIpUpdate() {
     }); }, Math.floor(Math.random() * 1500) + 500);
 }
 app.get('/api/v1/ip/blocked', function (req, res) {
-    console.log("Getting address " + req.query.ipAddress);
     var ipIsBlocked = fluentTree.findIpAddress(req.query.ipAddress);
     console.log("Is " + req.query.ipAddress + " blocked?", ipIsBlocked);
     res.status(200).send(ipIsBlocked);
@@ -123,6 +97,6 @@ app.get('/walk', function () {
     fluentTree.walkTheTree();
 });
 app.listen(PORT, function () {
-    console.log("\u26A1\uFE0F[server]: Server is running at https://localhost:" + PORT);
+    console.log("\u26A1\uFE0F[server]: Server is running on port " + PORT + ".");
 });
-console.log(getFirstIp());
+console.log(startIpUpdate());
