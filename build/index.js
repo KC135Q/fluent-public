@@ -44,27 +44,19 @@ var FluentTree_1 = require("./FluentTree");
 var FluentFile_1 = require("./FluentFile");
 var app = express_1.default();
 var PORT = 8080;
-var quickStart = 0; // 0 or 1 -- multiply in Timer to quickstart when not t
-var ipTestUrl = 'https://raw.githubusercontent.com/KC135Q/ip-lists/master/addresses.netset';
-var ipTestUrl2 = 'https://raw.githubusercontent.com/KC135Q/ip-lists/master/addresses3.netset';
-var ipUrl = 'https://raw.githubusercontent.com/ktsaou/blocklist-ipsets/master/firehol_level1.netset';
+// fluentFile for file operations
 var fluentFile = new FluentFile_1.FluentFile();
+// fluentTree is a radix tree representing the current blocked ip addresses
 var fluentTree = new FluentTree_1.FluentTree();
-/**
-  Uses the test file to get a sample of the ip address list.
-  This will be moved to a test before going to production with the code.
-  @function getFirstIp
-  @params none
-  @return none
- */
-function getFirstIp() {
+function getFile(fileUrl) {
+    if (fileUrl === void 0) { fileUrl = 'https://raw.githubusercontent.com/ktsaou/blocklist-ipsets/master/firehol_level1.netset'; }
     return __awaiter(this, void 0, void 0, function () {
         var error_1;
         return __generator(this, function (_a) {
             switch (_a.label) {
                 case 0:
                     _a.trys.push([0, 2, , 3]);
-                    return [4 /*yield*/, fluentFile.getCurrentFile(ipTestUrl)];
+                    return [4 /*yield*/, fluentFile.getCurrentFile(fileUrl)];
                 case 1:
                     _a.sent();
                     // Check to see if the file date has changed. No need to process the file if it hasn't
@@ -88,9 +80,7 @@ function getFirstIp() {
                     error_1 = _a.sent();
                     console.warn(error_1);
                     return [3 /*break*/, 3];
-                case 3:
-                    startIpUpdate();
-                    return [2 /*return*/];
+                case 3: return [2 /*return*/];
             }
         });
     });
@@ -108,23 +98,11 @@ function startIpUpdate() {
                 switch (_a.label) {
                     case 0:
                         process.stdout.write('.');
-                        return [4 /*yield*/, fluentFile.getCurrentFile(ipTestUrl2)];
+                        return [4 /*yield*/, getFile()
+                            // do it again (like, forever...)
+                        ];
                     case 1:
                         _a.sent();
-                        // Only process the file if the udpated date line has changed
-                        if (fluentFile.lastUpdated !== fluentFile.currentDate) {
-                            fluentFile.getAddressesToRemove().forEach(function (address) {
-                                console.log("Remove " + address);
-                                fluentTree.removeIpAddress(address);
-                            });
-                            fluentFile.getAddressesToAdd().forEach(function (address) {
-                                console.log("Add " + address);
-                                fluentTree.addIpAddress(address);
-                            });
-                            // Move this address list to 'previous' list so we can use it to compare the new list to
-                            //  on the next import
-                            fluentFile.archiveAddresses();
-                        }
                         // do it again (like, forever...)
                         startIpUpdate();
                         return [2 /*return*/];
@@ -138,7 +116,7 @@ function startIpUpdate() {
 }
 /**
  * Route checking to see if the provided ip address is blocked..
- * @name get/api/v1/ip/blocked
+ * @name "get/api/v1/ip/blocked"
  * @param {string} path - Express path
  * @param {string} ipAddress - Query parameter in ipv4 format
  * @example - Localhost example
@@ -157,16 +135,17 @@ app.get('/api/v1/ip/blocked', function (req, res) {
 /**
  * Express 'walk' route to show some of the tree structure
  * @description
- * @name get/walk
- * @param
- * @returns
+ * @name "get/walk"
+ * @param {string} route - Express walk route
+ * @returns {number} status - http response code of 200 when complete
+ * @returns {json} message - Message to requester
  */
 app.get('/walk', function (req, res) {
     fluentTree.walkTheTree();
     res.status(200).json({ message: 'Walk complete' });
 });
 app.get('/test', function (req, res) {
-    var testArray = [
+    [
         '0.0.0.0',
         '1.10.16.0',
         '1.19.0.0',
@@ -196,4 +175,6 @@ app.get('/test', function (req, res) {
 app.listen(PORT, function () {
     console.log("\u26A1\uFE0F[server]: Server is running at https://localhost:" + PORT);
 });
-getFirstIp();
+var starterFile = getFile();
+console.log("Started!", starterFile);
+startIpUpdate();
