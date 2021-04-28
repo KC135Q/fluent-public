@@ -35,6 +35,11 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
         if (op[0] & 5) throw op[1]; return { value: op[0] ? op[1] : void 0, done: true };
     }
 };
+var __spreadArray = (this && this.__spreadArray) || function (to, from) {
+    for (var i = 0, il = from.length, j = to.length; i < il; i++, j++)
+        to[j] = from[i];
+    return to;
+};
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -63,7 +68,7 @@ var FluentFile = /** @class */ (function () {
         });
     };
     FluentFile.prototype.setAddresses = function (addresses) {
-        this.currentAddresses = addresses;
+        this.currentAddresses = __spreadArray([], addresses);
     };
     FluentFile.prototype.getCurrentFile = function (url) {
         return __awaiter(this, void 0, void 0, function () {
@@ -88,8 +93,7 @@ var FluentFile = /** @class */ (function () {
     };
     FluentFile.prototype.getAddressesToAdd = function () {
         var _this = this;
-        var newAddresses = this.currentAddresses.filter(function (address) { return !_this.previousAddresses.includes(address); });
-        return newAddresses;
+        return this.currentAddresses.filter(function (address) { return !_this.previousAddresses.includes(address); });
     };
     FluentFile.prototype.getAddressesToRemove = function () {
         var _this = this;
@@ -97,15 +101,8 @@ var FluentFile = /** @class */ (function () {
         return oldAddresses;
     };
     FluentFile.prototype.archiveAddresses = function () {
-        this.previousAddresses = this.currentAddresses || [];
-        this.currentAddresses = [];
-    };
-    FluentFile.prototype.getLastUpdated = function () {
-        return this.lastUpdated;
-    };
-    FluentFile.prototype.setLastUpdated = function (lastUpdated) {
-        if (lastUpdated === void 0) { lastUpdated = ''; }
-        this.lastUpdated = lastUpdated;
+        this.previousAddresses = __spreadArray([], this.currentAddresses) || [];
+        this.currentAddresses.length = 0;
     };
     return FluentFile;
 }());

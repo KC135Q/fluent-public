@@ -24,14 +24,23 @@ const ipIndex = {
  */
 export class FluentTree {
   aLevelNodes: Node[] = [];
-  searchAvailable: boolean = true; // Change this to false when removing a Node
+  // searchAvailable: boolean = true; // Change this to false when removing a Node
   constructor() {
-    console.log("I'm a tree");
+    console.log("I'm a tree :)");
   }
+
+  /**
+    - addIpAddress
+    @description 
+    @method addIpAddress
+    @param
+    @returns
+   */
   addIpAddress(ipAddress: string): void {
     console.log(`Adding ${ipAddress}`);
     // If validation on incoming address is required, add it here
     const ipParts = this.parseIp(ipAddress);
+
     // Check for NaN
     if (ipParts[0] != ipParts[0]) {
       return;
@@ -41,34 +50,49 @@ export class FluentTree {
     this.insertIpAddress(node, this.aLevelNodes, ipParts);
   }
 
+  /**
+    - removeIpAddress
+    @description 
+    @method removeIpAddress
+    @param
+    @returns
+   */
   removeIpAddress(ipAddress: string): void {
     console.log(`Removing ${ipAddress}`);
     // If validation on incoming address is required, add it here
     const ipParts = this.parseIp(ipAddress);
     if (this.aLevelNodes && this.aLevelNodes.length > 0) {
-      let success = this.searchAndDestroy(
-        this.aLevelNodes,
-        ipIndex.octA,
-        ipParts
-      );
+      this.searchAndDestroy(this.aLevelNodes, ipIndex.octA, ipParts, -1);
     }
     return;
   }
 
+  /**
+    - searchAndDestroy
+    @description 
+    @method searchAndDestroy
+    @param
+    @returns
+   */
   searchAndDestroy(
     levelNodes: Node[],
     levelNumber: number,
     ipParts: number[],
+    levelAIndex: number,
     nodeTuple: [number, Node][] = []
   ): boolean {
     for (let i = 0; i < levelNodes.length; i++) {
       if (levelNodes[i].value === ipParts[levelNumber]) {
+        if (levelNumber === ipIndex.octA) {
+          levelAIndex = i;
+        }
         nodeTuple.push([i, levelNodes[i]]);
-        if (levelNumber < ipIndex.octD) {
+        if (levelNumber < ipIndex.prefix) {
           return this.searchAndDestroy(
             levelNodes[i].childNodes,
             levelNumber + 1,
             ipParts,
+            levelAIndex,
             nodeTuple
           );
         }
@@ -81,10 +105,9 @@ export class FluentTree {
     } else {
       let removed: boolean = false;
       let level: number = ipIndex.octD;
-      while (!removed && level > 0) {
+      while (!removed && level > ipIndex.octA) {
         // if childNodes.length = zero, then remove it (go to parent and remove it from the array)
         if (nodeTuple[level][1].childNodes.length === 0) {
-          console.log('LEVEL: ', level);
           nodeTuple[level - 1][1].childNodes.splice(nodeTuple[level][0], 1);
         } else {
           // no children = zero means we can stop moving up levels
@@ -92,16 +115,31 @@ export class FluentTree {
         }
         level = level - 1;
       }
+      // special case for level a nodes :)
+      let sneezing = 0;
+      if (
+        levelAIndex > -1 &&
+        this.aLevelNodes[levelAIndex].childNodes.length === 0
+      ) {
+        this.aLevelNodes.splice(levelAIndex, 1);
+      }
+
       return true;
     }
   }
 
+  /**
+   *  findIpAddress
+   *  @description - Accepts an ipv4 address as a string and returns a boolean. The
+   *    return is true if the ip is found in the list (so block it) or false if it isn't
+   *  @param {string} ipAddress - the ipv4 address being checked (as a string)
+   *  @return {boolean} - true if found in the list, false if not
+   */
   findIpAddress(ipAddress: string): boolean {
     try {
-      // let vertexValues: number[] = []
-      // Parse IP
+      // Use ipParts to turn the ip string into an array representing dotted decimal values and prefix
       const ipParts = this.parseIp(ipAddress);
-      // quickSearch (prefix later)
+      // Console logs for testing purposes - remove before production
       console.log(`Finding: ${ipParts}`);
       if (
         this.aLevelNodes &&
@@ -124,8 +162,8 @@ export class FluentTree {
       General approach is if it is less than the first then splice, the first in the array or 
       greater than the last, then push. Otherwise, use a QuickSort algorithm to put it in the 
       proper location with a Splice method
-    @param {Node} currentNode - Node that has the value of the current octect level
-    @param {Node<Array>} currentLevelNodeList - Array of nodes at the current octect level
+    @param {Node} currentNode - Node that has the value of the current octet level
+    @param {Node<Array>} currentLevelNodeList - Array of nodes at the current octet level
     @param {number<Array>} ipParts - Array of dotted decimal values for each of the four octet levels
    */
   insertIpAddress(
@@ -166,40 +204,57 @@ export class FluentTree {
     return;
   }
 
+  /**
+   * parseIp - converts an ipv4 address from string format to array of each dotted decimal section
+   *   and the prefix
+   * @method parseIp
+   * @param  {string} ipString - ipv4 address in string format with prefix
+   * @return {number<Array>} - array in the form of [dotted-decimal, dotted-decimal, dotted-decimal, dotted-decimal, prefix]. Default prefix (if none is passed in) is 32
+   * @example - These are sent in from the ip file on GitHub
+   * ipString of "5.44.248.0/21" returns [5, 44, 24, 0, 21]
+   */
   parseIp(ipString: string): number[] {
     const ipParse = ipString
+      // dotted decimal portion is the first (zero) index of the split string
       .split('/')[0]
       .split('.')
-      .map((octet) => parseInt(octet));
+      .map((dottedDecimal) => parseInt(dottedDecimal));
     // Get the prefix from the end of the string and use 32 if no prefix is found
     ipParse.push(parseInt(ipString.split('/')[1]) || 32);
 
     return ipParse;
   }
 
+  /**
+    - quickSearch
+    @description 
+    @method quickSearch
+    @param
+    @returns
+   */
   quickSearch(
     levelNodes: Node[],
     levelNumber: number,
     ipParts: number[],
     nodeTrail: number[] = []
   ): boolean {
-    console.log('-- IP PARTS -- ', ipParts);
-
+    // Used for CIDR range determination later on - based on lowest possible ip match
+    //  in the blocked list, not the one sent in for checking
+    let trailPrefix: null | number = null;
     // return of false means not found
     let found: boolean = false;
     // set leftIndex = 0
     let leftIndex = 0;
-    console.log(`trail: ${nodeTrail}`);
-    if (ipParts[levelNumber] < levelNodes[leftIndex].value) {
+    if (
+      ipParts[levelNumber] > 255 ||
+      ipParts[levelNumber] < levelNodes[leftIndex].value
+    ) {
       return false;
     }
     // set rightIndex = length of array - 1
     let rightIndex = levelNodes.length - 1;
-
+    // nextNode will be used to
     let nextNode!: Node;
-    console.log(
-      `Left: ${leftIndex}: ${levelNodes[leftIndex].value}, Right: ${rightIndex}: ${levelNodes[rightIndex].value}`
-    );
     if (levelNodes[leftIndex].value === ipParts[levelNumber]) {
       nextNode = levelNodes[leftIndex];
     } else if (levelNodes[rightIndex].value === ipParts[levelNumber]) {
@@ -209,6 +264,7 @@ export class FluentTree {
     } else {
       while (leftIndex < rightIndex && !found) {
         let middleIndex = Math.floor((leftIndex + rightIndex) / 2);
+
         if (ipParts[levelNumber] > levelNodes[rightIndex].value) {
           // Value is higher than the highest value in the current Node array so just return it in case
           //  it is captured by the nearest prefix :)
@@ -217,13 +273,18 @@ export class FluentTree {
         } else if (ipParts[levelNumber] === levelNodes[middleIndex].value) {
           nextNode = levelNodes[middleIndex];
           found = true;
-        } else if (levelNodes[middleIndex].value > ipParts[levelNumber]) {
+        } else if (levelNodes[middleIndex].value < ipParts[levelNumber]) {
           leftIndex = middleIndex;
         } else {
           rightIndex = middleIndex;
         }
       }
+
       if (!found) nextNode = levelNodes[leftIndex];
+
+      if (levelNumber >= ipIndex.octD) {
+        trailPrefix = nextNode.prefix || null;
+      }
     }
     nodeTrail.push(nextNode.value);
     // Do it again?
@@ -244,15 +305,31 @@ export class FluentTree {
         },
         true
       );
-      if (found) {
-        return true;
-      } else {
-        // Look at prefix
-        return false;
+      if (!found && trailPrefix) {
+        if (ipParts.length > 4) ipParts.pop();
+        // Add prefix check here
+        let addressesRequired = ipParts.reduce((acc, cv, idx, ary) => {
+          return (
+            (cv - nodeTrail[idx]) * Math.pow(256, ary.length - 1 - idx) + acc
+          );
+        }, 0);
+        let calculatedPrefix =
+          addressesRequired === 1
+            ? 31
+            : 32 - Math.ceil(Math.log2(addressesRequired));
+        if (calculatedPrefix >= trailPrefix) found = true;
       }
+      return found;
     }
   }
 
+  /**
+    - quickSort
+    @description 
+    @method quickSort
+    @param
+    @returns
+   */
   quickSort(nodeList: Node[], node: Node): Node {
     // set left, right and middle index
     let leftIndex = 0;
@@ -284,8 +361,34 @@ export class FluentTree {
     return node;
   }
 
+  /**
+    - isAddressInRange
+    @description 
+    @method isAddressInRange
+    @param
+    @returns
+   */
+  isAddressInRange(
+    ipToCheck: number[],
+    ipBase: number[],
+    prefix: null | number
+  ): boolean {
+    return true;
+  }
+
+  /**
+    - walkTheTree
+    @description 
+    @method walkTheTree
+    @param
+    @returns
+   */
   walkTheTree(nodes: Node[] = this.aLevelNodes): void {
-    console.log(`Length: ${nodes.length}: ${nodes}`);
+    let listOfNodeValues = nodes.reduce(
+      (acc: string, cv: string) => acc + cv.value + ' ',
+      ''
+    );
+    console.log(`Length: ${nodes.length}: ${listOfNodeValues}`);
     nodes.forEach((node) => {
       console.log(`-- node: ${node.value}`);
     });

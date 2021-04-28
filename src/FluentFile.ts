@@ -6,7 +6,6 @@ export class FluentFile {
   currentDate: string = '';
   previousAddresses: string[] = [];
   currentHeader: string[] = [];
-
   currentAddresses: string[] = [];
 
   constructor() {
@@ -25,7 +24,7 @@ export class FluentFile {
   }
 
   setAddresses(addresses: string[]): void {
-    this.currentAddresses = addresses;
+    this.currentAddresses = [...addresses];
   }
 
   async getCurrentFile(url: string) {
@@ -37,37 +36,36 @@ export class FluentFile {
       this.setAddresses(
         data.data.split('\n').filter((line: string) => line.indexOf('#') < 0)
       );
-
-      return;
+      return
     } catch (error) {
       throw error;
     }
   }
 
   getAddressesToAdd(): string[] {
-    let newAddresses = this.currentAddresses.filter(
+    return this.currentAddresses.filter(
       (address: string) => !this.previousAddresses.includes(address)
     );
-    return newAddresses;
   }
 
   getAddressesToRemove(): string[] {
     let oldAddresses = this.previousAddresses.filter(
       (address: string) => !this.currentAddresses.includes(address)
     );
+
     return oldAddresses;
   }
 
   archiveAddresses(): void {
-    this.previousAddresses = this.currentAddresses || [];
-    this.currentAddresses = [];
+    this.previousAddresses = [...this.currentAddresses] || [];
+    this.currentAddresses.length = 0;
   }
 
-  getLastUpdated(): string {
-    return this.lastUpdated;
-  }
-
-  setLastUpdated(lastUpdated: string = ''): void {
-    this.lastUpdated = lastUpdated;
-  }
+  // getLastUpdated(): string {
+  //   return this.lastUpdated;
+  // }
+  //
+  // setLastUpdated(lastUpdated: string = ''): void {
+  //   this.lastUpdated = lastUpdated;
+  // }
 }
