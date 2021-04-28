@@ -1,5 +1,7 @@
 # fluent-ip-blacklist
 
+- some docs would be nice
+
 # Deployment
 
 - packer init fluent.pkr.hcl
