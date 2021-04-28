@@ -32,8 +32,15 @@ var FluentTree = /** @class */ (function () {
     // searchAvailable: boolean = true; // Change this to false when removing a Node
     function FluentTree() {
         this.aLevelNodes = [];
-        console.log("I'm a tree");
+        console.log("I'm a tree :)");
     }
+    /**
+      - addIpAddress
+      @description
+      @method addIpAddress
+      @param
+      @returns
+     */
     FluentTree.prototype.addIpAddress = function (ipAddress) {
         console.log("Adding " + ipAddress);
         // If validation on incoming address is required, add it here
@@ -46,6 +53,13 @@ var FluentTree = /** @class */ (function () {
         console.log("Quickly sorting " + ipParts);
         this.insertIpAddress(node, this.aLevelNodes, ipParts);
     };
+    /**
+      - removeIpAddress
+      @description
+      @method removeIpAddress
+      @param
+      @returns
+     */
     FluentTree.prototype.removeIpAddress = function (ipAddress) {
         console.log("Removing " + ipAddress);
         // If validation on incoming address is required, add it here
@@ -55,6 +69,13 @@ var FluentTree = /** @class */ (function () {
         }
         return;
     };
+    /**
+      - searchAndDestroy
+      @description
+      @method searchAndDestroy
+      @param
+      @returns
+     */
     FluentTree.prototype.searchAndDestroy = function (levelNodes, levelNumber, ipParts, levelAIndex, nodeTuple) {
         if (nodeTuple === void 0) { nodeTuple = []; }
         for (var i = 0; i < levelNodes.length; i++) {
@@ -88,19 +109,26 @@ var FluentTree = /** @class */ (function () {
             }
             // special case for level a nodes :)
             var sneezing = 0;
-            if (levelAIndex > -1 && this.aLevelNodes[levelAIndex].childNodes.length === 0) {
+            if (levelAIndex > -1 &&
+                this.aLevelNodes[levelAIndex].childNodes.length === 0) {
                 this.aLevelNodes.splice(levelAIndex, 1);
             }
             return true;
         }
     };
+    /**
+     *  findIpAddress
+     *  @description - Accepts an ipv4 address as a string and returns a boolean. The
+     *    return is true if the ip is found in the list (so block it) or false if it isn't
+     *  @param {string} ipAddress - the ipv4 address being checked (as a string)
+     *  @return {boolean} - true if found in the list, false if not
+     */
     FluentTree.prototype.findIpAddress = function (ipAddress) {
         try {
-            // let vertexValues: number[] = []
-            // Parse IP
+            // Use ipParts to turn the ip string into an array representing dotted decimal values and prefix
             var ipParts = this.parseIp(ipAddress);
-            // quickSearch (prefix later)
-            // console.log(`Finding: ${ipParts}`);
+            // Console logs for testing purposes - remove before production
+            console.log("Finding: " + ipParts);
             if (this.aLevelNodes &&
                 this.aLevelNodes[0].value > ipParts[ipIndex.octA]) {
                 return false;
@@ -159,33 +187,49 @@ var FluentTree = /** @class */ (function () {
         }
         return;
     };
+    /**
+     * parseIp - converts an ipv4 address from string format to array of each dotted decimal section
+     *   and the prefix
+     * @method parseIp
+     * @param  {string} ipString - ipv4 address in string format with prefix
+     * @return {number<Array>} - array in the form of [dotted-decimal, dotted-decimal, dotted-decimal, dotted-decimal, prefix]. Default prefix (if none is passed in) is 32
+     * @example - These are sent in from the ip file on GitHub
+     * ipString of "5.44.248.0/21" returns [5, 44, 24, 0, 21]
+     */
     FluentTree.prototype.parseIp = function (ipString) {
         var ipParse = ipString
+            // dotted decimal portion is the first (zero) index of the split string
             .split('/')[0]
             .split('.')
-            .map(function (octet) { return parseInt(octet); });
+            .map(function (dottedDecimal) { return parseInt(dottedDecimal); });
         // Get the prefix from the end of the string and use 32 if no prefix is found
         ipParse.push(parseInt(ipString.split('/')[1]) || 32);
         return ipParse;
     };
+    /**
+      - quickSearch
+      @description
+      @method quickSearch
+      @param
+      @returns
+     */
     FluentTree.prototype.quickSearch = function (levelNodes, levelNumber, ipParts, nodeTrail) {
         if (nodeTrail === void 0) { nodeTrail = []; }
-        // console.log('-- IP PARTS -- ', ipParts);
+        // Used for CIDR range determination later on - based on lowest possible ip match
+        //  in the blocked list, not the one sent in for checking
         var trailPrefix = null;
         // return of false means not found
         var found = false;
         // set leftIndex = 0
         var leftIndex = 0;
-        // console.log(`trail: ${nodeTrail}`);
-        if (ipParts[levelNumber] < levelNodes[leftIndex].value) {
+        if (ipParts[levelNumber] > 255 ||
+            ipParts[levelNumber] < levelNodes[leftIndex].value) {
             return false;
         }
         // set rightIndex = length of array - 1
         var rightIndex = levelNodes.length - 1;
+        // nextNode will be used to
         var nextNode;
-        // console.log(
-        //   `Left: ${leftIndex}: ${levelNodes[leftIndex].value}, Right: ${rightIndex}: ${levelNodes[rightIndex].value}`
-        // );
         if (levelNodes[leftIndex].value === ipParts[levelNumber]) {
             nextNode = levelNodes[leftIndex];
         }
@@ -208,7 +252,7 @@ var FluentTree = /** @class */ (function () {
                     nextNode = levelNodes[middleIndex];
                     found = true;
                 }
-                else if (levelNodes[middleIndex].value > ipParts[levelNumber]) {
+                else if (levelNodes[middleIndex].value < ipParts[levelNumber]) {
                     leftIndex = middleIndex;
                 }
                 else {
@@ -237,18 +281,24 @@ var FluentTree = /** @class */ (function () {
                     ipParts.pop();
                 // Add prefix check here
                 var addressesRequired = ipParts.reduce(function (acc, cv, idx, ary) {
-                    console.log("cv: " + cv + " - nodeTrail[idx] " + nodeTrail[idx] + " * Math.pow(256, ary.length " + ary.length + " - idx " + idx + ")) + acc: " + acc);
-                    return ((cv - nodeTrail[idx]) * Math.pow(256, ary.length - 1 - idx)) + acc;
+                    return ((cv - nodeTrail[idx]) * Math.pow(256, ary.length - 1 - idx) + acc);
                 }, 0);
-                console.log("Required: " + addressesRequired);
-                var calculatedPrefix = addressesRequired === 1 ? 31 : 32 - Math.ceil(Math.log2(addressesRequired));
-                console.log("Calulated: " + calculatedPrefix + ", Existing: " + trailPrefix);
+                var calculatedPrefix = addressesRequired === 1
+                    ? 31
+                    : 32 - Math.ceil(Math.log2(addressesRequired));
                 if (calculatedPrefix >= trailPrefix)
                     found = true;
             }
             return found;
         }
     };
+    /**
+      - quickSort
+      @description
+      @method quickSort
+      @param
+      @returns
+     */
     FluentTree.prototype.quickSort = function (nodeList, node) {
         // set left, right and middle index
         var leftIndex = 0;
@@ -280,13 +330,28 @@ var FluentTree = /** @class */ (function () {
         nodeList.splice(leftIndex, 0, node);
         return node;
     };
+    /**
+      - isAddressInRange
+      @description
+      @method isAddressInRange
+      @param
+      @returns
+     */
     FluentTree.prototype.isAddressInRange = function (ipToCheck, ipBase, prefix) {
         return true;
     };
+    /**
+      - walkTheTree
+      @description
+      @method walkTheTree
+      @param
+      @returns
+     */
     FluentTree.prototype.walkTheTree = function (nodes) {
         var _this = this;
         if (nodes === void 0) { nodes = this.aLevelNodes; }
-        console.log("Length: " + nodes.length + ": " + nodes);
+        var listOfNodeValues = nodes.reduce(function (acc, cv) { return acc + cv.value + ' '; }, '');
+        console.log("Length: " + nodes.length + ": " + listOfNodeValues);
         nodes.forEach(function (node) {
             console.log("-- node: " + node.value);
         });
