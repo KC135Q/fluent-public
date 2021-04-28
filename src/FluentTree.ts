@@ -385,7 +385,7 @@ export class FluentTree {
    */
   walkTheTree(nodes: Node[] = this.aLevelNodes): void {
     let listOfNodeValues = nodes.reduce(
-      (acc: string, cv: string) => acc + cv.value + ' ',
+      (acc: string, cv: Node) => acc + cv.value + ' ',
       ''
     );
     console.log(`Length: ${nodes.length}: ${listOfNodeValues}`);

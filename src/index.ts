@@ -5,27 +5,15 @@ import { FluentFile } from './FluentFile';
 const app = express();
 const PORT = 8080;
 
-let quickStart = 0; // 0 or 1 -- multiply in Timer to quickstart when not t
-
-const ipTestUrl =
-  'https://raw.githubusercontent.com/KC135Q/ip-lists/master/addresses.netset';
-const ipTestUrl2 =
-  'https://raw.githubusercontent.com/KC135Q/ip-lists/master/addresses3.netset';
-const ipUrl =
-  'https://raw.githubusercontent.com/ktsaou/blocklist-ipsets/master/firehol_level1.netset';
-
+// fluentFile for file operations
 const fluentFile = new FluentFile();
+// fluentTree is a radix tree representing the current blocked ip addresses
 const fluentTree = new FluentTree();
-/**
-  Uses the test file to get a sample of the ip address list.
-  This will be moved to a test before going to production with the code.
-  @function getFirstIp
-  @params none
-  @return none
- */
-async function getFirstIp() {
-  try {
-    await fluentFile.getCurrentFile(ipTestUrl);
+
+async function getFile(fileUrl: string =
+    'https://raw.githubusercontent.com/ktsaou/blocklist-ipsets/master/firehol_level1.netset') {
+  try{
+    await fluentFile.getCurrentFile(fileUrl);
     // Check to see if the file date has changed. No need to process the file if it hasn't
     if (fluentFile.lastUpdated !== fluentFile.currentDate) {
       // Get an array of addresses that are no longer on the list and remove them from the tree
@@ -45,8 +33,7 @@ async function getFirstIp() {
   } catch (error) {
     console.warn(error);
   }
-
-  startIpUpdate();
+  return;
 }
 
 /**
@@ -58,21 +45,7 @@ function startIpUpdate() {
   try {
     setTimeout(async () => {
       process.stdout.write('.');
-      await fluentFile.getCurrentFile(ipTestUrl2);
-      // Only process the file if the udpated date line has changed
-      if (fluentFile.lastUpdated !== fluentFile.currentDate) {
-        fluentFile.getAddressesToRemove().forEach((address) => {
-          console.log(`Remove ${address}`);
-          fluentTree.removeIpAddress(address);
-        });
-        fluentFile.getAddressesToAdd().forEach((address) => {
-          console.log(`Add ${address}`);
-          fluentTree.addIpAddress(address);
-        });
-        // Move this address list to 'previous' list so we can use it to compare the new list to
-        //  on the next import
-        fluentFile.archiveAddresses();
-      }
+      await getFile()
       // do it again (like, forever...)
       startIpUpdate();
     }, Math.floor(Math.random() * 9000) + 3000);
@@ -83,7 +56,7 @@ function startIpUpdate() {
 
 /**
  * Route checking to see if the provided ip address is blocked..
- * @name get/api/v1/ip/blocked
+ * @name "get/api/v1/ip/blocked"
  * @param {string} path - Express path
  * @param {string} ipAddress - Query parameter in ipv4 format
  * @example - Localhost example
@@ -105,9 +78,10 @@ app.get('/api/v1/ip/blocked', (req: Request, res: Response) => {
 /**
  * Express 'walk' route to show some of the tree structure
  * @description
- * @name get/walk
- * @param
- * @returns
+ * @name "get/walk"
+ * @param {string} route - Express walk route
+ * @returns {number} status - http response code of 200 when complete
+ * @returns {json} message - Message to requester
  */
 app.get('/walk', (req: Request, res: Response) => {
   fluentTree.walkTheTree();
@@ -115,7 +89,7 @@ app.get('/walk', (req: Request, res: Response) => {
 });
 
 app.get('/test', (req: Request, res: Response) => {
-  let testArray = [
+  [
     '0.0.0.0',
     '1.10.16.0',
     '1.19.0.0',
@@ -147,4 +121,6 @@ app.listen(PORT, () => {
   console.log(`⚡️[server]: Server is running at https://localhost:${PORT}`);
 });
 
-getFirstIp();
+let starterFile = getFile();
+console.log("Started!", starterFile)
+startIpUpdate();
