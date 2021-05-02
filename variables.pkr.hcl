@@ -26,3 +26,4 @@ variable AWS_SSH_USERNAME {
   type = string
   default  = "ec2-user"
 }
+

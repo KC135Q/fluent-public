@@ -40,4 +40,4 @@
 - `terraform apply`
 
 - SSH into EC2, use ec2-user for troubleshooting
-
+  ssh -i "fluent-pem.pem" ec2-user@ec2-3-16-177-220.us-east-2.compute.amazonaws.com

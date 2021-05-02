@@ -4,9 +4,12 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
+    "hashi:build": "npm run packer && npm run terraform",
     "start:build": "tsc -w",
     "start:run": "nodemon build/index.js",
-    "start": "concurrently npm:start:*"
+    "start": "concurrently npm:start:*",
+    "terraform": "terraform init && terraform validate && terraform plan -out=.tfplan && terraform apply '.tfplan'",
+    "packer": "packer init . && packer validate . && packer build ."
   },
   "repository": {
     "type": "git",
@@ -27,6 +30,7 @@
   "dependencies": {
     "axios": "^0.21.1",
     "express": "^4.17.1",
-    "morgan": "^1.10.0"
+    "morgan": "^1.10.0",
+    "pm2": "^4.5.6"
   }
 }

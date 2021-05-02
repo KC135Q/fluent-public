@@ -110,6 +110,11 @@ dist
 # Hashicorp builds
 .terraform/
 hashicorpinformation/
+hashicorp/
+
+# hashicorp variables
+variables.pkr.hcl
+variables.tf
 
 # OS and IDE Stuff
 .DS_Store

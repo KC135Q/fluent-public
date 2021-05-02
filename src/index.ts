@@ -3,7 +3,10 @@ import { FluentTree } from './FluentTree';
 import { FluentFile } from './FluentFile';
 
 const app = express();
-const PORT = 8080;
+const PORT = process.env.PORT || 8080;
+
+const fiveMinutes = 300000;
+const fifteenMinutes = 900000;
 
 // fluentFile for file operations
 const fluentFile = new FluentFile();
@@ -37,7 +40,7 @@ async function getFile(fileUrl: string =
 }
 
 /**
- *   @description Uses a random interval between 5 minutes
+ *   @description Uses a random interval between 5 and 20 minutes
  *   @function startIpUpdate
  *   @params none
  */
@@ -48,7 +51,7 @@ function startIpUpdate() {
       await getFile()
       // do it again (like, forever...)
       startIpUpdate();
-    }, Math.floor(Math.random() * 9000) + 3000);
+    }, Math.floor(Math.random() * fifteenMinutes) + fiveMinutes);
   } catch (error) {
     console.warn(error);
   }
@@ -89,6 +92,7 @@ app.get('/walk', (req: Request, res: Response) => {
 });
 
 app.get('/test', (req: Request, res: Response) => {
+
   [
     '0.0.0.0',
     '1.10.16.0',

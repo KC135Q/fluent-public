@@ -1,7 +1,7 @@
 provider "aws" {
-  region        = var.aws_region
-  access_key    = var.aws_access_key
-  secret_key    = var.aws_secret_key
+  region        = var.AWS_REGION
+  access_key    = var.AWS_ACCESS_KEY
+  secret_key    = var.AWS_SECRET_KEY
 }
 
 resource "aws_security_group" "testInstanceSG" {
@@ -35,14 +35,31 @@ resource "aws_security_group" "testInstanceSG" {
   }
 }
 
+resource "aws_eip" "lb" {
+  instance = aws_instance.web.id
+  vpc      = true
+}
+
+data "aws_ami" "fluent" {
+  owners      = ["self"]
+  most_recent = true
+  name_regex = "^fluent-ami-[[:alnum:]]+"
+}
+
 resource "aws_instance" "web" {
-  ami           = "ami-08e6f405721a8a1c2"
-  instance_type = "t2.small"
+  ami           = data.aws_ami.fluent.id
+  instance_type = var.AWS_INSTANCE_TYPE
   vpc_security_group_ids = [aws_security_group.testInstanceSG.id]  
   key_name = "fluent-pem"
+
+  user_data = <<-EOF
+            #!/bin/bash
+            echo "<h1>running production version</h1>"
+            sudo env PATH=$PATH:/usr/bin /usr/lib/node_modules/pm2/bin/pm2 startup systemd -u ec2-user --hp /home/ec2-user
+            sudo pm2 restart
+            EOF
 
   tags = {
     Name = "FLUENT"
   }
-
 }
