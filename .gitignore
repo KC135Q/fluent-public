@@ -112,6 +112,9 @@ dist
 hashicorpinformation/
 hashicorp/
 
+# Typescript Build
+build/
+
 # hashicorp variables
 variables.pkr.hcl
 variables.tf
