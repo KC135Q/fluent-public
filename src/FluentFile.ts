@@ -7,6 +7,7 @@ export class FluentFile {
   previousAddresses: string[] = [];
   currentHeader: string[] = [];
   currentAddresses: string[] = [];
+  whichList: string = '';
 
   constructor() {
     if (!this.lastUpdated) {
@@ -17,7 +18,7 @@ export class FluentFile {
   setHeader(header: string[]): void {
     this.currentHeader = header;
     header.forEach((headline) => {
-      if (headline.indexOf('This File Date') > -1) {
+      if (headline.indexOf(this.whichList === 'spamhaus' ? 'Last-Modified' : 'This File Date') > -1) {
         this.currentDate = headline.split(':')[1];
       }
     });
@@ -34,7 +35,12 @@ export class FluentFile {
         data.data.split('\n').filter((line: string) => line.indexOf('#') > -1)
       );
       this.setAddresses(
-        data.data.split('\n').filter((line: string) => line.indexOf('#') < 0)
+          this.whichList === 'spamhaus' ?
+            data.data.split('\n').filter((line: string) => {
+              line.indexOf('#') < 0
+              return line.split(";")[0].trim()
+            }) :
+              data.data.split('\n').filter((line: string) => line.indexOf('#') < 0)
       );
       return
     } catch (error) {

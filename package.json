@@ -4,10 +4,11 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "hashi:build": "npm run packer && npm run terraform",
-    "start:build": "tsc -w",
-    "start:run": "nodemon build/index.js",
-    "start": "concurrently npm:start:*",
+    "hashi:deploy": "tsc && npm run packer && npm run terraform",
+    "dev:build": "tsc -w",
+    "dev:run": "nodemon build/index.js",
+    "dev": "concurrently npm:dev:*",
+    "start": "node index.js",
     "terraform": "terraform init && terraform validate && terraform plan -out=.tfplan && terraform apply '.tfplan'",
     "packer": "packer init . && packer validate . && packer build ."
   },

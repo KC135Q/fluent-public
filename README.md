@@ -8,7 +8,7 @@
 - Ensure you have the latest version of [NodeJS](https://nodejs.org/en/download/)
 - The following commands are completed from the __terminal__ in the root directory of the application unless otherwise stated
 - `npm i`
-- `npm run start`
+- `npm run dev`
 - Once you have seen a few thousand lines of IP addresses added followed by the following:
   ```
   [start:run] Quickly sorting 224,0,0,0,3
@@ -30,14 +30,17 @@
 
 # Deployment to AWS
 - Using Packer with Terraform enables a high availability deployment process
-- `packer init fluent.pkr.hcl`
-- `packer validate fluent.pkr.hcl`
-- `packer build fluent.pkr.hcl`
-- (Check the AMI) -- ami-033bf633d41bf098a -- from the packer build is used in Terraform config file
-- `terraform init`
-- `terraform validate`
-- `terraform plan`
-- `terraform apply`
-
+  `npm run hashi:deploy` completes the following actions (in sequence)
+  - `packer init fluent.pkr.hcl`
+  - `packer validate fluent.pkr.hcl`
+  - `packer build fluent.pkr.hcl`
+  - packer ami is automatically pulled by the terraform script
+  - `terraform init`
+  - `terraform validate`
+  - `terraform plan`
+  - `terraform apply`
 - SSH into EC2, use ec2-user for troubleshooting
-  ssh -i "fluent-pem.pem" ec2-user@ec2-3-16-177-220.us-east-2.compute.amazonaws.com
+  - `ssh -i "fluent-pem.pem" ec2-user@ec2-3-16-177-220.us-east-2.compute.amazonaws.com`
+  - `pm2 start index.js`
+- Endpoint is now available:
+  - [http://ec2-3-16-177-220.us-east-2.compute.amazonaws.com:8080/api/v1/ip/blocked?ipAddress=224.0.0.1](http://ec2-3-16-177-220.us-east-2.compute.amazonaws.com:8080/api/v1/ip/blocked?ipAddress=224.0.0.1)

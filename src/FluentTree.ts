@@ -253,7 +253,7 @@ export class FluentTree {
     }
     // set rightIndex = length of array - 1
     let rightIndex = levelNodes.length - 1;
-    // nextNode will be used to
+    // nextNode will be used to continue down (dotted decimal value left to right) the IP address levels
     let nextNode!: Node;
     if (levelNodes[leftIndex].value === ipParts[levelNumber]) {
       nextNode = levelNodes[leftIndex];

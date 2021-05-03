@@ -3,8 +3,9 @@ import { FluentTree } from './FluentTree';
 import { FluentFile } from './FluentFile';
 
 const app = express();
-const PORT = process.env.PORT || 8080;
+const PORT = 8080;
 
+// Set interval time range (min and max)
 const fiveMinutes = 300000;
 const fifteenMinutes = 900000;
 
@@ -13,9 +14,21 @@ const fluentFile = new FluentFile();
 // fluentTree is a radix tree representing the current blocked ip addresses
 const fluentTree = new FluentTree();
 
+// firehol url: 'https://raw.github.com/ktsaou/blocklist-ipsets/master/firehol_level1.netset'
+// firehol stopped working on the 2nd on my EC2 -- switched to spamhaus for demo
+// Spamhaus Drop List: 'https://www.spamhaus.org/drop/drop.txt'
+
+/**
+ * @description Checks the data at the url to see if it is new. If so, then it gets addresses to remove from the list
+ *  and addressed to add to the list. Adds and removes are passed to the Tree object for processing.
+ * @param {string} fileUrl - Website to capture DROP data from
+ * @return {void} no significant data passed in the return
+ */
 async function getFile(fileUrl: string =
-    'https://raw.githubusercontent.com/ktsaou/blocklist-ipsets/master/firehol_level1.netset') {
+    'https://www.spamhaus.org/drop/drop.txt') {
+  fluentFile.whichList = 'spamhaus'
   try{
+    console.log('get file')
     await fluentFile.getCurrentFile(fileUrl);
     // Check to see if the file date has changed. No need to process the file if it hasn't
     if (fluentFile.lastUpdated !== fluentFile.currentDate) {
@@ -33,25 +46,26 @@ async function getFile(fileUrl: string =
       //  next time.
       fluentFile.archiveAddresses();
     }
+    return
   } catch (error) {
     console.warn(error);
+    return
   }
-  return;
 }
-
 /**
- *   @description Uses a random interval between 5 and 20 minutes
+ *   @description Uses a random interval between 5 and 20 minutes to check file for updates
  *   @function startIpUpdate
  *   @params none
  */
 function startIpUpdate() {
+  console.log('Start the timer...')
   try {
     setTimeout(async () => {
       process.stdout.write('.');
-      await getFile()
+      getFile();
       // do it again (like, forever...)
       startIpUpdate();
-    }, Math.floor(Math.random() * fifteenMinutes) + fiveMinutes);
+    }, Math.floor(Math.random() * fiveMinutes) + fifteenMinutes);
   } catch (error) {
     console.warn(error);
   }
@@ -79,6 +93,19 @@ app.get('/api/v1/ip/blocked', (req: Request, res: Response) => {
 });
 
 /**
+ * Express '/' home route to force a file read update
+ * @description
+ * @name "get/"
+ * @param {string} route - Express home route
+ * @returns {number} status - http response code of 200 when complete
+ * @returns {html} body - HTML partial with notification
+ */
+app.get('/', async (req: Request, res: Response) => {
+  await getFile()
+  console.log("file retrieved")
+  res.status(200).send("<h1>Fluent IP Coding Challenge...</h1>")
+})
+/**
  * Express 'walk' route to show some of the tree structure
  * @description
  * @name "get/walk"
@@ -91,6 +118,9 @@ app.get('/walk', (req: Request, res: Response) => {
   res.status(200).json({ message: 'Walk complete' });
 });
 
+/**
+ * Easter egg for you... can be moved over to testing
+ */
 app.get('/test', (req: Request, res: Response) => {
 
   [
@@ -125,6 +155,5 @@ app.listen(PORT, () => {
   console.log(`⚡️[server]: Server is running at https://localhost:${PORT}`);
 });
 
-let starterFile = getFile();
-console.log("Started!", starterFile)
+console.log("Launched");
 startIpUpdate();
