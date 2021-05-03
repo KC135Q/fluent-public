@@ -1,24 +1,32 @@
 /**
- * Class representing a Node in the tree
+ * Class creating a Node in the tree
  */
 class Node {
+  // Prefix (CIDR) stored on level (3) nodes --- bottom dwellers they are
   prefix: null | number = null;
+  // Children are Nodes too
   childNodes: Node[] = [];
+  /**
+   * Create a Node
+   * @param {number} value - Dotted decimal value of the ip address at this level (four levels - left to right)
+   * @param {number} level - 'Level' of the dotted decimal 0.1.2.3/prefix
+   */
   constructor(public value: number, public level: number) {}
 }
 
+
 const ipIndex = {
-  octA: 0,
-  octB: 1,
-  octC: 2,
-  octD: 3,
+  decA: 0,
+  decB: 1,
+  decC: 2,
+  decD: 3,
   prefix: 4,
 };
 /**
  * FluentTree module
  * @module FluentTree
  * @description Primary data structure storing current blacklisted ip addresses. It is a variant of a Radix tree to decrease depth while still maintaining an efficient lookup time
- * @property {Array} aLevelNodes Contains all values for the first ip octet
+ * @property {Array} aLevelNodes Contains all values for the first ip dotted decimal section / level
  * @method addIpAddress
  * @method insertIpAddress
  */
@@ -62,7 +70,7 @@ export class FluentTree {
     // If validation on incoming address is required, add it here
     const ipParts = this.parseIp(ipAddress);
     if (this.aLevelNodes && this.aLevelNodes.length > 0) {
-      this.searchAndDestroy(this.aLevelNodes, ipIndex.octA, ipParts, -1);
+      this.searchAndDestroy(this.aLevelNodes, ipIndex.decA, ipParts, -1);
     }
     return;
   }
@@ -83,7 +91,7 @@ export class FluentTree {
   ): boolean {
     for (let i = 0; i < levelNodes.length; i++) {
       if (levelNodes[i].value === ipParts[levelNumber]) {
-        if (levelNumber === ipIndex.octA) {
+        if (levelNumber === ipIndex.decA) {
           levelAIndex = i;
         }
         nodeTuple.push([i, levelNodes[i]]);
@@ -104,8 +112,8 @@ export class FluentTree {
       return false;
     } else {
       let removed: boolean = false;
-      let level: number = ipIndex.octD;
-      while (!removed && level > ipIndex.octA) {
+      let level: number = ipIndex.decD;
+      while (!removed && level > ipIndex.decA) {
         // if childNodes.length = zero, then remove it (go to parent and remove it from the array)
         if (nodeTuple[level][1].childNodes.length === 0) {
           nodeTuple[level - 1][1].childNodes.splice(nodeTuple[level][0], 1);
@@ -143,11 +151,11 @@ export class FluentTree {
       console.log(`Finding: ${ipParts}`);
       if (
         this.aLevelNodes &&
-        this.aLevelNodes[0].value > ipParts[ipIndex.octA]
+        this.aLevelNodes[0].value > ipParts[ipIndex.decA]
       ) {
         return false;
       } else {
-        return this.quickSearch(this.aLevelNodes, ipIndex.octA, ipParts);
+        return this.quickSearch(this.aLevelNodes, ipIndex.decA, ipParts);
       }
     } catch (error) {
       console.log(error);
@@ -158,13 +166,13 @@ export class FluentTree {
 
   /**
     @method insertIpAddress
-    @description Uses the value of the current dotted decimal section (aka octet level).
+    @description Uses the value of the current dotted decimal section
       General approach is if it is less than the first then splice, the first in the array or 
       greater than the last, then push. Otherwise, use a QuickSort algorithm to put it in the 
       proper location with a Splice method
-    @param {Node} currentNode - Node that has the value of the current octet level
-    @param {Node<Array>} currentLevelNodeList - Array of nodes at the current octet level
-    @param {number<Array>} ipParts - Array of dotted decimal values for each of the four octet levels
+    @param {Node} currentNode - Node that has the value of the current dotted decimal section
+    @param {Node<Array>} currentLevelNodeList - Array of nodes at the current dotted decimal section
+    @param {number<Array>} ipParts - Array of dotted decimal values for each of the four dotted decimal section
    */
   insertIpAddress(
     currentNode: Node,
@@ -255,13 +263,16 @@ export class FluentTree {
     let rightIndex = levelNodes.length - 1;
     // nextNode will be used to continue down (dotted decimal value left to right) the IP address levels
     let nextNode!: Node;
+    // Check left and righ (min and max value) - if a match, return that as the next node
     if (levelNodes[leftIndex].value === ipParts[levelNumber]) {
       nextNode = levelNodes[leftIndex];
     } else if (levelNodes[rightIndex].value === ipParts[levelNumber]) {
       nextNode = levelNodes[rightIndex];
     } else if (ipParts[levelNumber] < levelNodes[leftIndex].value) {
+      // Weird case for non contiguous CIDR ranges -- maybe later
       nextNode = levelNodes[leftIndex];
     } else {
+      // Otherwise continue checking value relative to the middle index until a match or out of Nodes
       while (leftIndex < rightIndex && !found) {
         let middleIndex = Math.floor((leftIndex + rightIndex) / 2);
 
@@ -279,17 +290,17 @@ export class FluentTree {
           rightIndex = middleIndex;
         }
       }
-
+      // If not found, return the left value (CIDR range may push this up to include the current search)
       if (!found) nextNode = levelNodes[leftIndex];
 
-      if (levelNumber >= ipIndex.octD) {
+      if (levelNumber >= ipIndex.decD) {
         trailPrefix = nextNode.prefix || null;
       }
     }
     nodeTrail.push(nextNode.value);
     // Do it again?
 
-    if (levelNumber < ipIndex.octD) {
+    if (levelNumber < ipIndex.decD) {
       levelNumber++;
       return this.quickSearch(
         nextNode.childNodes,
@@ -298,7 +309,7 @@ export class FluentTree {
         nodeTrail
       );
     } else {
-      // if trail = ipParts 0 - 3 then found = true
+      // if trail = ipParts 0 - 3 then found = true (Exact match without prefix)
       found = nodeTrail.reduce(
         (acc: boolean, cv: number, index: number): boolean => {
           return acc && cv === ipParts[index];
@@ -308,6 +319,7 @@ export class FluentTree {
       if (!found && trailPrefix) {
         if (ipParts.length > 4) ipParts.pop();
         // Add prefix check here
+        // convert dotted decimal differences from searched IP to closest found IP to one decimal (# ip addresses different)
         let addressesRequired = ipParts.reduce((acc, cv, idx, ary) => {
           return (
             (cv - nodeTrail[idx]) * Math.pow(256, ary.length - 1 - idx) + acc
@@ -317,6 +329,8 @@ export class FluentTree {
           addressesRequired === 1
             ? 31
             : 32 - Math.ceil(Math.log2(addressesRequired));
+        // Using the log2 above, convert the difference into prefix required, if the actual prefix is greater
+        //  then we have a match so block it.
         if (calculatedPrefix >= trailPrefix) found = true;
       }
       return found;

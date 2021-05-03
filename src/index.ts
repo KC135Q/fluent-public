@@ -25,8 +25,8 @@ const fluentTree = new FluentTree();
  * @return {void} no significant data passed in the return
  */
 async function getFile(fileUrl: string =
-    'https://www.spamhaus.org/drop/drop.txt') {
-  fluentFile.whichList = 'spamhaus'
+    'https://raw.github.com/ktsaou/blocklist-ipsets/master/firehol_level1.netset') {
+  fluentFile.whichList = 'firehol'
   try{
     console.log('get file')
     await fluentFile.getCurrentFile(fileUrl);

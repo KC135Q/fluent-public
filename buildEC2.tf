@@ -52,13 +52,6 @@ resource "aws_instance" "web" {
   vpc_security_group_ids = [aws_security_group.testInstanceSG.id]  
   key_name = "fluent-pem"
 
-  user_data = <<-EOF
-            #!/bin/bash
-            echo "<h1>running production version</h1>"
-            sudo env PATH=$PATH:/usr/bin /usr/lib/node_modules/pm2/bin/pm2 startup systemd -u ec2-user --hp /home/ec2-user
-            sudo pm2 restart
-            EOF
-
   tags = {
     Name = "FLUENT"
   }

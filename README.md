@@ -1,6 +1,6 @@
 # fluent-ip-blacklist
 
-- How I [approached this challenge?](./docs/approach.md)
+- How I [approached this challenge?](markdown/approach.md)
   - Use the link above to view my notes on how I approached this challenge
 
 # Getting started (Locally)
@@ -40,7 +40,7 @@
   - `terraform plan`
   - `terraform apply`
 - SSH into EC2, use ec2-user for troubleshooting
-  - `ssh -i "fluent-pem.pem" ec2-user@ec2-3-16-177-220.us-east-2.compute.amazonaws.com`
+  - `ssh -i "fluent-pem.pem" ec2-user@ec2-3-12-246-189.us-east-2.compute.amazonaws.com`
   - `pm2 start index.js`
 - Endpoint is now available:
-  - [http://ec2-3-16-177-220.us-east-2.compute.amazonaws.com:8080/api/v1/ip/blocked?ipAddress=224.0.0.1](http://ec2-3-16-177-220.us-east-2.compute.amazonaws.com:8080/api/v1/ip/blocked?ipAddress=224.0.0.1)
+  - [http://ec2-3-12-246-189.us-east-2.compute.amazonaws.com:8080/api/v1/ip/blocked?ipAddress=224.0.0.1](http://ec2-3-16-177-220.us-east-2.compute.amazonaws.com:8080/api/v1/ip/blocked?ipAddress=224.0.0.1)

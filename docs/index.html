@@ -1,0 +1,177 @@
+<!doctype html>
+<html class="default no-js">
+<head>
+	<meta charset="utf-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<title>fluent-ip-blacklist</title>
+	<meta name="description" content="Documentation for fluent-ip-blacklist">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="assets/css/main.css">
+	<script async src="assets/js/search.js" id="search-script"></script>
+</head>
+<body>
+<header>
+	<div class="tsd-page-toolbar">
+		<div class="container">
+			<div class="table-wrap">
+				<div class="table-cell" id="tsd-search" data-index="assets/js/search.json" data-base=".">
+					<div class="field">
+						<label for="tsd-search-field" class="tsd-widget search no-caption">Search</label>
+						<input id="tsd-search-field" type="text" />
+					</div>
+					<ul class="results">
+						<li class="state loading">Preparing search index...</li>
+						<li class="state failure">The search index is not available</li>
+					</ul>
+					<a href="index.html" class="title">fluent-ip-blacklist</a>
+				</div>
+				<div class="table-cell" id="tsd-widgets">
+					<div id="tsd-filter">
+						<a href="#" class="tsd-widget options no-caption" data-toggle="options">Options</a>
+						<div class="tsd-filter-group">
+							<div class="tsd-select" id="tsd-filter-visibility">
+								<span class="tsd-select-label">All</span>
+								<ul class="tsd-select-list">
+									<li data-value="public">Public</li>
+									<li data-value="protected">Public/Protected</li>
+									<li data-value="private" class="selected">All</li>
+								</ul>
+							</div>
+							<input type="checkbox" id="tsd-filter-inherited" checked />
+							<label class="tsd-widget" for="tsd-filter-inherited">Inherited</label>
+							<input type="checkbox" id="tsd-filter-externals" checked />
+							<label class="tsd-widget" for="tsd-filter-externals">Externals</label>
+						</div>
+					</div>
+					<a href="#" class="tsd-widget menu no-caption" data-toggle="menu">Menu</a>
+				</div>
+			</div>
+		</div>
+	</div>
+	<div class="tsd-page-title">
+		<div class="container">
+			<h1>fluent-ip-blacklist</h1>
+		</div>
+	</div>
+</header>
+<div class="container container-main">
+	<div class="row">
+		<div class="col-8 col-content">
+			<div class="tsd-panel tsd-typography">
+				<a href="#fluent-ip-blacklist" id="fluent-ip-blacklist" style="color: inherit; text-decoration: none;">
+					<h1>fluent-ip-blacklist</h1>
+				</a>
+				<ul>
+					<li>How I <a href="markdown/approach.md">approached this challenge?</a><ul>
+							<li>Use the link above to view my notes on how I approached this challenge</li>
+						</ul>
+					</li>
+				</ul>
+				<a href="#getting-started-locally" id="getting-started-locally" style="color: inherit; text-decoration: none;">
+					<h1>Getting started (Locally)</h1>
+				</a>
+				<ul>
+					<li><p>Download and unzip or clone the repo to your local computer</p>
+					</li>
+					<li><p>Ensure you have the latest version of <a href="https://nodejs.org/en/download/">NodeJS</a></p>
+					</li>
+					<li><p>The following commands are completed from the <strong>terminal</strong> in the root directory of the application unless otherwise stated</p>
+					</li>
+					<li><p><code>npm i</code></p>
+					</li>
+					<li><p><code>npm run dev</code></p>
+					</li>
+					<li><p>Once you have seen a few thousand lines of IP addresses added followed by the following:
+						<code>[start:run] Quickly sorting 224,0,0,0,3 [start:run] Add  [start:run] Adding  [start:run] ...</code>, then you are ready to test the api from the address bar (or Postman/Insomnia if you prefer)</p>
+					</li>
+					<li><p>Now switch to your <strong>browser</strong> while keeping your terminal available (with application running)</p>
+						<blockquote>
+							<p><strong>NOTE</strong> The IP addresses used in these directions may change by the time you use them. Please refer to the
+							originating GitHub file or view the terminal output for current IP listings :smile:</p>
+						</blockquote>
+					</li>
+					<li><p>Select an IP address that was added to the list (visible in terminal) and add it to the api call:</p>
+						<ul>
+							<li><code>localhost:8080/api/v1/ip/blocked?ipAddress=224.0.0.1</code></li>
+						</ul>
+					</li>
+					<li><p>You should get a response of <code>{blocked: true}</code> which means it shouldn&#39;t be allowed through</p>
+					</li>
+					<li><p>Now change it to one not listed such as <code>http://localhost:8080/api/v1/ip/blocked?ipAddress=223.255.255.12</code></p>
+					</li>
+					<li><p>Want to mess around a bit? There are two other GET routes that could be fun (make sure you can see the terminal):</p>
+						<ul>
+							<li><code>http://localhost:8080/walk</code></li>
+							<li><code>http://localhost:8080/test</code>  </li>
+						</ul>
+					</li>
+				</ul>
+				<a href="#deployment-to-aws" id="deployment-to-aws" style="color: inherit; text-decoration: none;">
+					<h1>Deployment to AWS</h1>
+				</a>
+				<ul>
+					<li>Using Packer with Terraform enables a high availability deployment process
+						<code>npm run hashi:deploy</code> completes the following actions (in sequence)<ul>
+							<li><code>packer init fluent.pkr.hcl</code></li>
+							<li><code>packer validate fluent.pkr.hcl</code></li>
+							<li><code>packer build fluent.pkr.hcl</code></li>
+							<li>packer ami is automatically pulled by the terraform script</li>
+							<li><code>terraform init</code></li>
+							<li><code>terraform validate</code></li>
+							<li><code>terraform plan</code></li>
+							<li><code>terraform apply</code></li>
+						</ul>
+					</li>
+					<li>SSH into EC2, use ec2-user for troubleshooting<ul>
+							<li><code>ssh -i &quot;fluent-pem.pem&quot; ec2-user@ec2-3-12-246-189.us-east-2.compute.amazonaws.com</code></li>
+							<li><code>pm2 start index.js</code></li>
+						</ul>
+					</li>
+					<li>Endpoint is now available:<ul>
+							<li><a href="http://ec2-3-16-177-220.us-east-2.compute.amazonaws.com:8080/api/v1/ip/blocked?ipAddress=224.0.0.1">http://ec2-3-12-246-189.us-east-2.compute.amazonaws.com:8080/api/v1/ip/blocked?ipAddress=224.0.0.1</a></li>
+						</ul>
+					</li>
+				</ul>
+			</div>
+		</div>
+		<div class="col-4 col-menu menu-sticky-wrap menu-highlight">
+			<nav class="tsd-navigation primary">
+				<ul>
+					<li class=" ">
+						<a href="modules.html">Modules</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="modules/fluentfile.html">Fluent<wbr>File</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="modules/fluenttree.html">Fluent<wbr>Tree</a>
+					</li>
+					<li class=" tsd-kind-module">
+						<a href="modules/index.html">index</a>
+					</li>
+				</ul>
+			</nav>
+			<nav class="tsd-navigation secondary menu-sticky">
+				<ul class="before-current">
+				</ul>
+			</nav>
+		</div>
+	</div>
+</div>
+<footer class="with-border-bottom">
+	<div class="container">
+		<h2>Legend</h2>
+		<div class="tsd-legend-group">
+			<ul class="tsd-legend">
+				<li class="tsd-kind-class"><span class="tsd-kind-icon">Class</span></li>
+			</ul>
+		</div>
+	</div>
+</footer>
+<div class="container tsd-generator">
+	<p>Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p>
+</div>
+<div class="overlay"></div>
+<script src="assets/js/main.js"></script>
+</body>
+</html>
