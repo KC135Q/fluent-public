@@ -100,10 +100,12 @@ app.get('/api/v1/ip/blocked', (req: Request, res: Response) => {
  * @returns {number} status - http response code of 200 when complete
  * @returns {html} body - HTML partial with notification
  */
-app.get('/', async (req: Request, res: Response) => {
-  await getFile()
-  console.log("file retrieved")
-  res.status(200).send("<h1>Fluent IP Coding Challenge...</h1>")
+app.get('/', (req: Request, res: Response) => {
+  getFile().then(() => {
+    console.log("file retrieved")
+    res.status(200).send("<h1>Fluent IP Coding Challenge...</h1>")
+  })
+
 })
 /**
  * Express 'walk' route to show some of the tree structure

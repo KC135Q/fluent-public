@@ -114,6 +114,9 @@ dist
 .terraform/
 hashicorpinformation/
 hashicorp/
+terraform.tfstate
+terraform.tfstate.backup
+.tfplan
 
 # Typescript Build
 build/
@@ -125,3 +128,6 @@ variables.tf
 # OS and IDE Stuff
 .DS_Store
 .idea/
+
+# private pem key
+*.pem
