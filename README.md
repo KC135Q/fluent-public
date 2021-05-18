@@ -41,6 +41,7 @@
   - `terraform apply`
 - SSH into EC2, use ec2-user for troubleshooting
   - `ssh -i "fluent-pem.pem" ec2-user@ec2-3-12-246-189.us-east-2.compute.amazonaws.com`
-  - `pm2 start index.js`
+  - `pm2 start index.js` - This will start the application as a background process indefinitely
+    - If you want to view the console during walk and test endpoints, use `node index.js` and leave the terminal window open.
 - Endpoint is now available:
   - [http://ec2-3-12-246-189.us-east-2.compute.amazonaws.com:8080/api/v1/ip/blocked?ipAddress=224.0.0.1](http://ec2-3-16-177-220.us-east-2.compute.amazonaws.com:8080/api/v1/ip/blocked?ipAddress=224.0.0.1)

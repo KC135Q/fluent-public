@@ -114,6 +114,9 @@ dist
 .terraform/
 hashicorpinformation/
 hashicorp/
+terraform.tfstate
+terraform.tfstate.backup
+.tfplan
 
 # Typescript Build
 build/
