@@ -3,7 +3,7 @@ import { FluentTree } from './FluentTree';
 import { FluentFile } from './FluentFile';
 
 const app = express();
-const PORT = 8080;
+const PORT = 3000;
 
 // Set interval time range (min and max)
 const fiveMinutes = 300000;

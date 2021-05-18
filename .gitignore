@@ -125,3 +125,6 @@ variables.tf
 # OS and IDE Stuff
 .DS_Store
 .idea/
+
+# private pem key
+*.pem
